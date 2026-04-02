@@ -127,6 +127,7 @@
         for (var k = 0; k < priceDivs.length; k++) {
           var pDiv = priceDivs[k];
           var pTourId = pDiv.getAttribute('data-tour');
+          var pLabel = pDiv.getAttribute('data-label') || '';
           var tourData = null;
 
           for (var l = 0; l < departures.length; l++) {
@@ -136,12 +137,10 @@
             }
           }
 
-          if (!tourData) {
-            pDiv.textContent = '';
-            continue;
-          }
+          if (!tourData) { pDiv.textContent = ''; continue; }
 
           var priceLines = [];
+          if (pLabel) priceLines.push('<strong>' + pLabel + '</strong>');
           if (tourData.base_price) priceLines.push('Rider: ' + fmt(tourData.base_price));
           if (tourData.pillion) priceLines.push('Pillion: ' + fmt(tourData.pillion));
           if (tourData.shared_room_discount) priceLines.push('Shared room discount: ' + fmt(tourData.shared_room_discount));
