@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Your Ride — Ride Down South</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Montserrat', sans-serif; background: #070e12; color: #e0e0e0; min-height: 100vh; display: flex; justify-content: center; padding: 24px 12px; }
+    .card { background: #0c1319; border: 1px solid #1a2230; border-radius: 12px; max-width: 640px; width: 100%; overflow: hidden; }
+    .header { padding: 24px 28px 18px; border-bottom: 1px solid #1a2230; display: flex; align-items: center; gap: 14px; }
+    .logo { width: 42px; height: 42px; border-radius: 8px; background: linear-gradient(135deg,#D97B2B,#a85a1b); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 1px; flex-shrink: 0; }
+    .header-text-top { font-size: 11px; letter-spacing: 2.5px; color: #D97B2B; font-weight: 600; text-transform: uppercase; }
+    .header-text-sub { font-size: 12px; color: #aaa; margin-top: 1px; }
+    .steps { display: flex; align-items: center; gap: 4px; padding: 16px 28px; border-bottom: 1px solid #1a2230; flex-wrap: wrap; }
+    .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #555; flex-shrink: 0; }
+    .dot.on { border-color: #D97B2B; color: #D97B2B; background: rgba(217,123,43,0.08); }
+    .step-label { font-size: 11px; color: #777; font-weight: 400; white-space: nowrap; }
+    .step-label.on { color: #ccc; }
+    .step-label.active { font-weight: 600; }
+    .step-line { height: 2px; background: #222; border-radius: 1px; flex: 1; min-width: 16px; }
+    .step-line.done { background: #D97B2B; }
+    .body { padding: 24px 28px 20px; }
+    h2 { color: #e8e8e8; font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+    .sub { color: #aaa; font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
+    label.field-label { display: block; font-size: 12px; font-weight: 600; color: #bbb; margin-bottom: 6px; margin-top: 20px; letter-spacing: 0.2px; }
+    .req { color: #D97B2B; margin-left: 3px; }
+    input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+      width: 100%; padding: 11px 14px; background: #111820; border: 1px solid #1e2530; border-radius: 8px;
+      color: #e0e0e0; font-size: 14px; font-family: 'Montserrat', sans-serif; outline: none;
+    }
+    input::placeholder, textarea::placeholder { color: #888 !important; opacity: 1 !important; }
+    select { padding-right: 36px; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    select option { background: #0c1218; color: #e0e0e0; }
+    textarea { resize: vertical; min-height: 60px; }
+    .err-border { border-color: #803030 !important; }
+    .row { display: flex; gap: 14px; }
+    .row > div { flex: 1; }
+    .radio-group { background: #111820; border: 1px solid #1e2530; border-radius: 8px; padding: 10px 14px; margin-top: 4px; }
+    .radio-item { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+    .radio-item:hover { background: rgba(217,123,43,0.04); }
+    .radio-item.on { background: rgba(217,123,43,0.06); }
+    .radio-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.15s; }
+    .radio-dot.on { border-color: #D97B2B; }
+    .radio-dot-inner { width: 8px; height: 8px; border-radius: 50%; background: #D97B2B; display: none; }
+    .radio-dot.on .radio-dot-inner { display: block; }
+    .radio-text { font-size: 13px; color: #bbb; }
+    .radio-item.on .radio-text { color: #e0e0e0; }
+    .radio-price { font-size: 12px; color: #D97B2B; font-weight: 500; margin-left: auto; }
+    .bike-section { font-size: 11px; color: #999; font-weight: 600; letter-spacing: 1px; padding: 2px 0 6px; text-transform: uppercase; }
+    .bike-divider { border-top: 1px solid #1e2530; margin-top: 6px; padding-top: 10px; }
+    .check-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 2px 0; }
+    .checkbox { width: 20px; height: 20px; border-radius: 5px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .checkbox.on { background: #D97B2B; border-color: #D97B2B; }
+    .check-text { font-size: 13px; color: #ccc; line-height: 1.5; }
+    .check-text a { color: #D97B2B; text-decoration: underline; }
+    .check-box { margin-top: 24px; padding: 14px 16px; background: #111820; border-radius: 8px; border: 1px solid #1e2530; }
+    .price-card { background: #111820; border: 1px solid #1e2530; border-radius: 10px; padding: 18px 20px; margin-top: 24px; }
+    .price-head { font-size: 11px; font-weight: 600; color: #D97B2B; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+    .price-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #ccc; padding: 5px 0; }
+    .price-val { font-weight: 600; color: #e0e0e0; font-variant-numeric: tabular-nums; }
+    .price-val.green { color: #5a9a5a; }
+    .price-total { border-top: 1px solid #252525; padding-top: 12px; margin-top: 6px; }
+    .price-total .price-val { color: #D97B2B; font-weight: 700; font-size: 18px; }
+    .price-note { font-size: 11px; color: #999; margin-top: 14px; line-height: 1.5; }
+    .waitlist { background: rgba(217,123,43,0.08); border: 1px solid rgba(217,123,43,0.25); border-radius: 8px; padding: 11px 14px; font-size: 13px; color: #D97B2B; margin-top: 14px; line-height: 1.5; }
+    .sum-row { display: flex; justify-content: space-between; font-size: 13px; color: #ccc; padding: 4px 0; }
+    .sum-lbl { color: #999; font-weight: 500; }
+    .btns { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; flex-wrap: wrap; }
+    .btn-p { padding: 12px 26px; background: linear-gradient(135deg,#D97B2B,#b5651d); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Montserrat', sans-serif; letter-spacing: 0.2px; }
+    .btn-p:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-s { padding: 12px 22px; background: transparent; border: 1px solid #2a3040; border-radius: 8px; color: #bbb; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Montserrat', sans-serif; }
+    .err-txt { color: #c04040; font-size: 13px; margin-top: 18px; }
+    .footer { padding: 16px 28px; border-top: 1px solid #1a2230; text-align: center; font-size: 12px; color: #999; }
+    .footer a { color: #D97B2B; text-decoration: none; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #1e2530; border-top-color: #D97B2B; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .step, .hidden { display: none; }
+    .step.active { display: block; }
+    .helper { font-size: 12px; color: #aaa; margin: 4px 0 10px; line-height: 1.5; }
+    @media (max-width: 500px) {
+      .row { flex-direction: column; gap: 0; }
+      .body { padding: 20px 18px 16px; }
+      .steps { padding: 14px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card" id="app">
+  <!-- Loading state -->
+  <div id="loading" style="text-align:center;padding:80px 20px;">
+    <div class="spinner"></div>
+    <p style="color:#888;margin-top:14px;font-size:13px;">Loading tour availability...</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var API_BASE = ''; // Same domain — Vercel serves both
+  var isEmbedded = window.location.search.indexOf('embedded=1') !== -1;
+
+  // State
+  var tourData = null;
+  var step = 1;
+  var form = {
+    firstName:'', lastName:'', email:'', phone:'', country:'',
+    tour:'', departureDate:'', sharedRoomName:'', addPillion:'', bike:'',
+    yearsRiding:'', bikeExperience:'', previousTours:'',
+    onroad:'', offroad:'',
+    licence:false, seatHeight:'',
+    medical:'', anythingElse:'', referral:'', terms:false
+  };
+
+  var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK','USA','Other'];
+  var BIKES_STD = [
+    {v:'crf1000', l:'Honda Africa Twin CRF1000 (2016\u20132018)'},
+    {v:'transalp', l:'Honda Transalp 750 (2023\u20132025)'},
+    {v:'nx500', l:'Honda NX500 (2024\u20132025)'}
+  ];
+  var BIKES_UP = [
+    {v:'crf1100', l:'Honda Africa Twin CRF1100', k:'bike_upgrade_crf1100'},
+    {v:'bmw1250gs', l:'BMW R1250GS', k:'bike_upgrade_bmw1250gs'}
+  ];
+  var YEARS = ['Less than 1 year','1\u20133 years','4\u201310 years','More than 10 years'];
+  var ONROAD = ['Beginner \u2014 I\u2019m new at road touring','Intermediate \u2014 I\u2019ve got some limited road touring experience','Experienced \u2014 I\u2019ve done lots of road tours'];
+  var OFFROAD = ['No gravel roads please','Beginner \u2014 still finding my way on gravel/dirt surfaces','Intermediate \u2014 I\u2019m comfortable on non-tarred surfaces','Experienced \u2014 I eat gravel roads for breakfast'];
+  var REFERRAL = ['Google search','Social media','Friend or family referral','Magazine or publication','YouTube','Motorcycle club or forum','Repeat customer','Other'];
+
+  function fmt(n) {
+    if (!n || isNaN(Number(n))) return '';
+    var num = Number(n);
+    if (num < 0) return '- ZAR ' + Math.abs(num).toLocaleString('en-ZA');
+    return 'ZAR ' + num.toLocaleString('en-ZA');
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    var d = new Date(s + 'T00:00:00');
+    var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function getDeps() {
+    if (!tourData || !form.tour) return [];
+    return tourData.departures.filter(function(d) { return d.tour_name === form.tour; });
+  }
+  function getSelDep() {
+    if (!form.departureDate) return null;
+    var deps = getDeps();
+    for (var i = 0; i < deps.length; i++) {
+      if (deps[i].departure_date === form.departureDate) return deps[i];
+    }
+    return null;
+  }
+  function getPricing() {
+    var dep = getSelDep();
+    if (!dep) return { base:0, upgrade:0, pillion:0, shared:0, total:0 };
+    var base = Number(dep.base_price) || 0;
+    var upgrade = 0;
+    if (form.bike === 'crf1100' && dep.bike_upgrade_crf1100) upgrade = Number(dep.bike_upgrade_crf1100) || 0;
+    if (form.bike === 'bmw1250gs' && dep.bike_upgrade_bmw1250gs) upgrade = Number(dep.bike_upgrade_bmw1250gs) || 0;
+    var pillion = (form.addPillion === 'Yes' && dep.pillion) ? (Number(dep.pillion) || 0) : 0;
+    var shared = (form.sharedRoomName.trim() && dep.shared_room_discount) ? (Number(dep.shared_room_discount) || 0) : 0;
+    return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
+  }
+
+  // ── Rendering ──
+  function render() {
+    var app = document.getElementById('app');
+    var html = '';
+
+    // Header (hidden when embedded)
+    if (!isEmbedded) {
+      html += '<div class="header">';
+      html += '<div class="logo">RDS</div>';
+      html += '<div><div class="header-text-top">Ride Down South</div>';
+      html += '<div class="header-text-sub">Book your African motorcycle adventure</div></div>';
+      html += '</div>';
+    }
+
+    // Step indicators
+    var labels = ['Your Details','Tour & Bike','Riding Experience'];
+    html += '<div class="steps">';
+    for (var i = 0; i < 3; i++) {
+      var s = i + 1;
+      var onClass = step >= s ? ' on' : '';
+      var activeClass = step === s ? ' active' : '';
+      html += '<div style="display:flex;align-items:center;gap:6px;' + (i < 2 ? 'flex:1;' : '') + '">';
+      html += '<div class="dot' + onClass + '">' + (step > s ? '\u2713' : s) + '</div>';
+      html += '<span class="step-label' + onClass + activeClass + '">' + labels[i] + '</span>';
+      if (i < 2) html += '<div class="step-line' + (step > s ? ' done' : '') + '"></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Step content
+    html += '<div class="body">';
+
+    if (step === 1) html += renderStep1();
+    else if (step === 2) html += renderStep2();
+    else if (step === 3) html += renderStep3();
+
+    html += '</div>';
+
+    // Footer
+    html += '<div class="footer">Questions? Email <a href="mailto:andrew@ridedownsouth.com">andrew@ridedownsouth.com</a></div>';
+
+    app.innerHTML = html;
+    bindEvents();
+  }
+
+  function selectHtml(id, label, req, opts, val) {
+    var h = '<label class="field-label">' + label + (req ? '<span class="req">*</span>' : '') + '</label>';
+    h += '<select id="' + id + '">';
+    for (var i = 0; i < opts.length; i++) {
+      var sel = opts[i].v === val ? ' selected' : '';
+      h += '<option value="' + opts[i].v + '"' + sel + '>' + opts[i].l + '</option>';
+    }
+    h += '</select>';
+    return h;
+  }
+
+  function inputHtml(id, label, req, type, val, ph) {
+    var h = '<label class="field-label">' + label + (req ? '<span class="req">*</span>' : '') + '</label>';
+    h += '<input type="' + type + '" id="' + id + '" value="' + escHtml(val) + '" placeholder="' + (ph||'') + '">';
+    return h;
+  }
+
+  function textareaHtml(id, label, req, val, ph) {
+    var h = '<label class="field-label">' + label + (req ? '<span class="req">*</span>' : '') + '</label>';
+    h += '<textarea id="' + id + '" rows="2" placeholder="' + (ph||'') + '">' + escHtml(val) + '</textarea>';
+    return h;
+  }
+
+  function radioGroupHtml(name, label, req, opts, val) {
+    var h = '<div style="margin-top:22px"><label class="field-label">' + label + (req ? '<span class="req">*</span>' : '') + '</label>';
+    h += '<div class="radio-group">';
+    for (var i = 0; i < opts.length; i++) {
+      var on = val === opts[i] ? ' on' : '';
+      h += '<div class="radio-item' + on + '" data-radio="' + name + '" data-val="' + escHtml(opts[i]) + '">';
+      h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
+      h += '<span class="radio-text">' + opts[i] + '</span>';
+      h += '</div>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  function escHtml(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Step 1 ──
+  function renderStep1() {
+    var h = '<h2>Your Details</h2><p class="sub">We just need a few details to get started.</p>';
+    h += '<div class="row"><div>' + inputHtml('firstName','First Name',true,'text',form.firstName,'First name') + '</div>';
+    h += '<div>' + inputHtml('lastName','Last Name',true,'text',form.lastName,'Last name') + '</div></div>';
+    h += inputHtml('email','Email',true,'email',form.email,'you@example.com');
+    h += inputHtml('phone','Phone (with country code)',true,'tel',form.phone,'+1 555 123 4567');
+
+    var countryOpts = [{v:'',l:'Select your country'}];
+    for (var i = 0; i < COUNTRIES.length; i++) countryOpts.push({v:COUNTRIES[i],l:COUNTRIES[i]});
+    h += '<div style="margin-top:20px">' + selectHtml('country','Country of Residence',true,countryOpts,form.country) + '</div>';
+
+    h += '<div class="btns"><div></div><button class="btn-p" id="btnNext1">Next: Tour & Bike</button></div>';
+    return h;
+  }
+
+  // ── Step 2 ──
+  function renderStep2() {
+    var h = '<h2>Tour & Bike</h2><p class="sub">Choose your tour, departure, accommodation preferences, and motorcycle.</p>';
+
+    // Tour select
+    var tourOpts = [{v:'',l:'Select a tour'}];
+    if (tourData) {
+      for (var i = 0; i < tourData.tour_names.length; i++) {
+        tourOpts.push({v:tourData.tour_names[i], l:tourData.tour_names[i]});
+      }
+    }
+    h += '<div style="margin-top:20px">' + selectHtml('tour','Which Tour are you booking?',true,tourOpts,form.tour) + '</div>';
+
+    // Departure dates
+    if (form.tour) {
+      var deps = getDeps();
+      var dateOpts = [{v:'',l:'Select a departure date'}];
+      for (var i = 0; i < deps.length; i++) {
+        var lbl = fmtDate(deps[i].departure_date) + ' \u2014 ' + fmtDate(deps[i].tour_end_date);
+        if (deps[i].tour_status.toLowerCase() === 'waitlist') lbl += ' (Waitlist)';
+        else if (deps[i].places_available) lbl += ' \u2014 ' + deps[i].places_available + ' places';
+        dateOpts.push({v:deps[i].departure_date, l:lbl});
+      }
+      h += '<div style="margin-top:20px">' + selectHtml('departureDate','Departure Date',true,dateOpts,form.departureDate) + '</div>';
+    }
+
+    // Waitlist banner
+    var dep = getSelDep();
+    if (dep && dep.tour_status.toLowerCase() === 'waitlist') {
+      h += '<div class="waitlist">This departure is on the waitlist. We\u2019ll confirm availability when we get in touch.</div>';
+    }
+
+    // Shared room
+    h += inputHtml('sharedRoomName','Sharing a room with someone? Enter their name',false,'text',form.sharedRoomName,'Leave blank for your own room');
+
+    // Pillion
+    h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
+
+    // Motorcycle preference
+    h += '<div style="margin-top:24px"><label class="field-label">Motorcycle Preference<span class="req">*</span></label>';
+    h += '<p class="helper">Standard options included in the tour price. Upgrades available where shown.</p>';
+    h += '<div class="radio-group" id="bikeGroup">';
+
+    h += '<div class="bike-section">Standard (included)</div>';
+    for (var i = 0; i < BIKES_STD.length; i++) {
+      var on = form.bike === BIKES_STD[i].v ? ' on' : '';
+      h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_STD[i].v + '">';
+      h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
+      h += '<span class="radio-text">' + BIKES_STD[i].l + '</span></div>';
+    }
+
+    if (dep && (dep.bike_upgrade_crf1100 || dep.bike_upgrade_bmw1250gs)) {
+      h += '<div class="bike-section bike-divider">Upgrades</div>';
+      for (var i = 0; i < BIKES_UP.length; i++) {
+        var amt = dep ? Number(dep[BIKES_UP[i].k]) || 0 : 0;
+        if (!amt) continue;
+        var on = form.bike === BIKES_UP[i].v ? ' on' : '';
+        h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_UP[i].v + '">';
+        h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
+        h += '<span class="radio-text" style="flex:1">' + BIKES_UP[i].l + '</span>';
+        h += '<span class="radio-price">+ ' + fmt(amt) + '</span></div>';
+      }
+    }
+
+    h += '<div class="bike-section bike-divider">Other</div>';
+    var ownOn = form.bike === 'own' ? ' on' : '';
+    h += '<div class="radio-item' + ownOn + '" data-radio="bike" data-val="own">';
+    h += '<div class="radio-dot' + ownOn + '"><div class="radio-dot-inner"></div></div>';
+    h += '<span class="radio-text">Own Bike</span></div>';
+    h += '</div></div>';
+
+    // Pricing card
+    if (dep) {
+      var p = getPricing();
+      h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
+      h += '<div class="price-row"><span>Rider (base price)</span><span class="price-val">' + fmt(p.base) + '</span></div>';
+      if (p.upgrade > 0) h += '<div class="price-row"><span>Motorcycle upgrade</span><span class="price-val">+ ' + fmt(p.upgrade) + '</span></div>';
+      if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
+      if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';
+      h += '<div class="price-row price-total"><span style="font-weight:600;color:#e0e0e0">Total</span><span class="price-val" style="color:#D97B2B;font-weight:700;font-size:18px">' + fmt(p.total) + '</span></div>';
+      h += '<p class="price-note">No payment required now \u2014 we\u2019ll send booking details and a payment link after reviewing your request.</p>';
+      h += '</div>';
+    }
+
+    h += '<div class="btns"><button class="btn-s" id="btnBack2">Back</button><button class="btn-p" id="btnNext2">Next: Riding Experience</button></div>';
+    return h;
+  }
+
+  // ── Step 3 ──
+  function renderStep3() {
+    var h = '<h2>Your Riding Experience</h2>';
+    h += '<p class="sub">We ride 280\u2013320km a day on tar and gravel roads. You\u2019ll need to be comfortable on large capacity motorcycles (500cc+). Please answer as accurately as you can.</p>';
+
+    var yearOpts = [{v:'',l:'Select'}];
+    for (var i = 0; i < YEARS.length; i++) yearOpts.push({v:YEARS[i],l:YEARS[i]});
+    h += '<div style="margin-top:20px">' + selectHtml('yearsRiding','How many years have you been riding?',true,yearOpts,form.yearsRiding) + '</div>';
+
+    h += textareaHtml('bikeExperience','Which motorcycle/s do you have the most experience with?',true,form.bikeExperience,'e.g. BMW R1200GS, Honda Africa Twin');
+    h += textareaHtml('previousTours','Have you done any adventure motorcycle tours before?',true,form.previousTours,'Tell us about any previous tours');
+
+    h += radioGroupHtml('onroad','On-road riding ability',true,ONROAD,form.onroad);
+    h += radioGroupHtml('offroad','Off-road riding ability',true,OFFROAD,form.offroad);
+
+    // Licence checkbox
+    h += '<div class="check-box' + (form.licence ? '' : '') + '" id="licenceBox">';
+    h += '<div class="check-row" id="licenceCheck">';
+    h += '<div class="checkbox' + (form.licence ? ' on' : '') + '">' + (form.licence ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</div>';
+    h += '<span class="check-text">I have a licence to ride a motorcycle over 125cc <span class="req">*</span></span>';
+    h += '</div></div>';
+
+    h += radioGroupHtml('seatHeight','Our bikes have seat heights from 750\u2013850mm (29.5\u201333.5in). Is that suitable?',true,['Yes','No, I need something lower'],form.seatHeight);
+
+    h += textareaHtml('medical','Physical limitations or medical conditions we should know about?',false,form.medical,'Optional');
+    h += textareaHtml('anythingElse','Anything else you\u2019d like us to know about your riding background?',false,form.anythingElse,'Optional');
+
+    // Attribution
+    h += '<div style="border-top:1px solid #1e2530;margin-top:28px;padding-top:24px">';
+    var refOpts = [{v:'',l:'Select'}];
+    for (var i = 0; i < REFERRAL.length; i++) refOpts.push({v:REFERRAL[i],l:REFERRAL[i]});
+    h += selectHtml('referral','How did you hear about us?',true,refOpts,form.referral);
+    h += '</div>';
+
+    // T&Cs
+    h += '<div class="check-box" id="termsBox">';
+    h += '<div class="check-row" id="termsCheck">';
+    h += '<div class="checkbox' + (form.terms ? ' on' : '') + '">' + (form.terms ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</div>';
+    h += '<span class="check-text">I have read and agree to the tour <a href="https://ridedownsouth.com/wp-content/uploads/2025/11/Ride-Down-South-Terms-and-Conditions-and-Waiver-v2.1_1.10.25.pdf" target="_blank" onclick="event.stopPropagation()">Terms and Conditions</a> <span class="req">*</span></span>';
+    h += '</div></div>';
+
+    // Summary
+    var dep = getSelDep();
+    if (dep) {
+      var p = getPricing();
+      var allBikes = BIKES_STD.concat(BIKES_UP).concat([{v:'own',l:'Own Bike'}]);
+      var bikeName = form.bike;
+      for (var i = 0; i < allBikes.length; i++) { if (allBikes[i].v === form.bike) { bikeName = allBikes[i].l; break; } }
+
+      h += '<div class="price-card" style="margin-top:28px"><div class="price-head">Booking Summary</div>';
+      h += '<div class="sum-row"><span class="sum-lbl">Name</span><span>' + escHtml(form.firstName + ' ' + form.lastName) + '</span></div>';
+      h += '<div class="sum-row"><span class="sum-lbl">Tour</span><span>' + escHtml(form.tour) + '</span></div>';
+      h += '<div class="sum-row"><span class="sum-lbl">Departure</span><span>' + fmtDate(form.departureDate) + '</span></div>';
+      h += '<div class="sum-row"><span class="sum-lbl">Motorcycle</span><span>' + escHtml(bikeName) + '</span></div>';
+      if (form.sharedRoomName.trim()) h += '<div class="sum-row"><span class="sum-lbl">Sharing with</span><span>' + escHtml(form.sharedRoomName) + '</span></div>';
+      if (form.addPillion === 'Yes') h += '<div class="sum-row"><span class="sum-lbl">Pillion</span><span>Yes</span></div>';
+      h += '<div class="sum-row" style="border-top:1px solid #252525;padding-top:10px;margin-top:6px"><span style="color:#999;font-weight:600">Total</span><span style="color:#D97B2B;font-weight:700">' + fmt(p.total) + '</span></div>';
+      h += '</div>';
+    }
+
+    h += '<div id="submitError"></div>';
+    h += '<div class="btns"><button class="btn-s" id="btnBack3">Back</button><button class="btn-p" id="btnSubmit">Request My Booking</button></div>';
+    return h;
+  }
+
+  // ── Validation ──
+  function validate(s) {
+    var e = [];
+    if (s >= 1) {
+      if (!form.firstName.trim()) e.push('firstName');
+      if (!form.lastName.trim()) e.push('lastName');
+      if (!form.email.trim() || form.email.indexOf('@') < 1) e.push('email');
+      if (!form.phone.trim()) e.push('phone');
+      if (!form.country) e.push('country');
+    }
+    if (s >= 2) {
+      if (!form.tour) e.push('tour');
+      if (!form.departureDate) e.push('departureDate');
+      if (!form.addPillion) e.push('addPillion');
+      if (!form.bike) e.push('bike');
+    }
+    if (s >= 3) {
+      if (!form.yearsRiding) e.push('yearsRiding');
+      if (!form.bikeExperience.trim()) e.push('bikeExperience');
+      if (!form.previousTours.trim()) e.push('previousTours');
+      if (!form.onroad) e.push('onroad');
+      if (!form.offroad) e.push('offroad');
+      if (!form.licence) e.push('licence');
+      if (!form.seatHeight) e.push('seatHeight');
+      if (!form.referral) e.push('referral');
+      if (!form.terms) e.push('terms');
+    }
+    return e;
+  }
+
+  // ── Event binding ──
+  function bindEvents() {
+    // Read form values from DOM
+    var fields = ['firstName','lastName','email','phone','country','tour','departureDate','sharedRoomName','yearsRiding','bikeExperience','previousTours','medical','anythingElse','referral'];
+    for (var i = 0; i < fields.length; i++) {
+      (function(field) {
+        var el = document.getElementById(field);
+        if (el) {
+          el.addEventListener('input', function() { form[field] = el.value; });
+          el.addEventListener('change', function() {
+            form[field] = el.value;
+            if (field === 'tour') { form.departureDate = ''; form.bike = ''; render(); }
+            if (field === 'departureDate') render();
+            if (field === 'sharedRoomName') render();
+          });
+        }
+      })(fields[i]);
+    }
+
+    // Radio buttons
+    var radios = document.querySelectorAll('[data-radio]');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].addEventListener('click', function() {
+        var name = this.getAttribute('data-radio');
+        var val = this.getAttribute('data-val');
+        form[name] = val;
+        render();
+      });
+    }
+
+    // Checkboxes
+    var licenceEl = document.getElementById('licenceCheck');
+    if (licenceEl) licenceEl.addEventListener('click', function() { form.licence = !form.licence; render(); });
+    var termsEl = document.getElementById('termsCheck');
+    if (termsEl) termsEl.addEventListener('click', function(e) {
+      if (e.target.tagName === 'A') return;
+      form.terms = !form.terms; render();
+    });
+
+    // Navigation
+    var btn;
+    btn = document.getElementById('btnNext1');
+    if (btn) btn.addEventListener('click', function() {
+      var errs = validate(1);
+      if (errs.length) { alert('Please fill in all required fields.'); return; }
+      step = 2; render(); window.scrollTo(0,0);
+    });
+    btn = document.getElementById('btnNext2');
+    if (btn) btn.addEventListener('click', function() {
+      var errs = validate(2);
+      if (errs.length) { alert('Please fill in all required fields, including pillion and motorcycle selection.'); return; }
+      step = 3; render(); window.scrollTo(0,0);
+    });
+    btn = document.getElementById('btnBack2');
+    if (btn) btn.addEventListener('click', function() { step = 1; render(); window.scrollTo(0,0); });
+    btn = document.getElementById('btnBack3');
+    if (btn) btn.addEventListener('click', function() { step = 2; render(); window.scrollTo(0,0); });
+
+    // Submit
+    btn = document.getElementById('btnSubmit');
+    if (btn) btn.addEventListener('click', function() {
+      var errs = validate(3);
+      if (errs.length) {
+        document.getElementById('submitError').innerHTML = '<p class="err-txt">Please complete all required fields, including licence confirmation and T&Cs.</p>';
+        return;
+      }
+      submitBooking();
+    });
+  }
+
+  // ── Submit ──
+  function submitBooking() {
+    var btn = document.getElementById('btnSubmit');
+    if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+    document.getElementById('submitError').innerHTML = '';
+
+    var dep = getSelDep();
+    var p = getPricing();
+
+    var payload = {
+      firstName: form.firstName, lastName: form.lastName, email: form.email,
+      phone: form.phone, country: form.country,
+      tour: form.tour, departureDate: form.departureDate,
+      tourEndDate: dep ? dep.tour_end_date : '',
+      sharedRoomName: form.sharedRoomName, addPillion: form.addPillion, bike: form.bike,
+      basePrice: p.base, upgradeAmount: p.upgrade, pillionAmount: p.pillion, sharedRoomDiscount: p.shared,
+      yearsRiding: form.yearsRiding, bikeExperience: form.bikeExperience,
+      previousTours: form.previousTours, onroad: form.onroad, offroad: form.offroad,
+      licence: form.licence, seatHeight: form.seatHeight,
+      medical: form.medical, anythingElse: form.anythingElse,
+      referral: form.referral, terms: form.terms
+    };
+
+    fetch(API_BASE + '/api/submit-booking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.success) {
+        showSuccess();
+      } else {
+        if (btn) { btn.disabled = false; btn.textContent = 'Request My Booking'; }
+        document.getElementById('submitError').innerHTML = '<p class="err-txt">' + (result.error || 'Something went wrong. Please email andrew@ridedownsouth.com') + '</p>';
+      }
+    })
+    .catch(function() {
+      if (btn) { btn.disabled = false; btn.textContent = 'Request My Booking'; }
+      document.getElementById('submitError').innerHTML = '<p class="err-txt">Connection error. Please email andrew@ridedownsouth.com</p>';
+    });
+  }
+
+  function showSuccess() {
+    var app = document.getElementById('app');
+    var h = '';
+    if (!isEmbedded) {
+      h += '<div class="header"><div class="logo">RDS</div><div>';
+      h += '<div class="header-text-top">Ride Down South</div>';
+      h += '<div class="header-text-sub">Book your African motorcycle adventure</div></div></div>';
+    }
+    h += '<div style="text-align:center;padding:64px 28px">';
+    h += '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="26" stroke="#D97B2B" stroke-width="2.5"/><path d="M17 29L24 36L39 22" stroke="#D97B2B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    h += '<h2 style="margin-top:22px;font-size:21px;color:#e8e8e8">Thanks for booking your tour!</h2>';
+    h += '<p style="color:#999;font-size:14px;line-height:1.7;max-width:400px;margin:14px auto 0">We\u2019ll be in touch with more details right away. Keep an eye on your inbox.</p>';
+    h += '</div>';
+    h += '<div class="footer">Questions? Email <a href="mailto:andrew@ridedownsouth.com">andrew@ridedownsouth.com</a></div>';
+    app.innerHTML = h;
+  }
+
+  // ── Init ──
+  fetch(API_BASE + '/api/tour-availability')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { tourData = data; render(); })
+    .catch(function() {
+      var app = document.getElementById('app');
+      app.innerHTML = '<div style="text-align:center;padding:60px 28px"><p style="color:#c04040;font-size:14px">Unable to load tour data. Please email <a href="mailto:andrew@ridedownsouth.com" style="color:#D97B2B">andrew@ridedownsouth.com</a> to book.</p></div>';
+    });
+})();
+</script>
+</body>
+</html>
