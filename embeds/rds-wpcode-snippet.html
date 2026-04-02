@@ -7,8 +7,8 @@
     if (!val || val === '-' || val === '0') return '';
     var n = parseInt(val.toString().replace(/[^0-9-]/g, ''), 10);
     if (isNaN(n)) return '';
-    if (n < 0) return 'ZAR -' + Math.abs(n).toLocaleString('en-ZA');
-    return 'ZAR ' + n.toLocaleString('en-ZA');
+    if (n < 0) return '- ZAR ' + Math.abs(n).toLocaleString('en-US');
+    return 'ZAR ' + n.toLocaleString('en-US');
   }
 
   function parseDate(str) {
@@ -136,7 +136,7 @@
           }
 
           var priceLines = [];
-          if (tourData.base_price) priceLines.push('Rider (sharing): ' + fmt(tourData.base_price));
+          if (tourData.base_price) priceLines.push('Rider: ' + fmt(tourData.base_price));
           if (tourData.pillion) priceLines.push('Pillion: ' + fmt(tourData.pillion));
           if (tourData.shared_room_discount) priceLines.push('Shared room discount: ' + fmt(tourData.shared_room_discount));
           pDiv.innerHTML = priceLines.join('<br>');
