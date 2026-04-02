@@ -82,6 +82,10 @@ module.exports = function handler(req, res) {
         if (!tourId) continue;
         if (tours[tourId]) continue;
 
+        // Skip rows without pricing data (e.g. header rows in other sheet sections)
+        var basePrice = getVal(row, 'base_price');
+        if (!basePrice || basePrice === '0') continue;
+
         tours[tourId] = {
           tour_id: tourId,
           tour_name: getVal(row, 'tour_name'),
