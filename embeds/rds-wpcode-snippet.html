@@ -1,0 +1,149 @@
+<script>
+(function () {
+  var PRICES_URL = 'https://rds-website-orcin.vercel.app/api/tour-prices';
+  var AVAIL_URL = 'https://rds-website-orcin.vercel.app/api/tour-availability';
+
+  function fmt(val) {
+    if (!val || val === '-' || val === '0') return '';
+    var n = parseInt(val.toString().replace(/[^0-9-]/g, ''), 10);
+    if (isNaN(n)) return '';
+    if (n < 0) return 'ZAR -' + Math.abs(n).toLocaleString('en-ZA');
+    return 'ZAR ' + n.toLocaleString('en-ZA');
+  }
+
+  function parseDate(str) {
+    if (!str) return null;
+    var parts = str.split('/');
+    if (parts.length !== 3) return null;
+    var d = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10) - 1;
+    var y = parseInt(parts[2], 10);
+    if (y < 100) y += 2000;
+    return new Date(y, m, d);
+  }
+
+  function formatDate(d) {
+    var months = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function formatDateShort(d) {
+    var months = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'];
+    return d.getDate() + ' ' + months[d.getMonth()];
+  }
+
+  function formatRange(dep, end) {
+    var depDate = parseDate(dep);
+    var endDate = parseDate(end);
+    if (!depDate) return '';
+    if (!endDate) return formatDate(depDate);
+    if (depDate.getFullYear() === endDate.getFullYear()) {
+      if (depDate.getMonth() === endDate.getMonth()) {
+        return depDate.getDate() + ' - ' + formatDate(endDate);
+      }
+      return formatDateShort(depDate) + ' - ' + formatDate(endDate);
+    }
+    return formatDate(depDate) + ' - ' + formatDate(endDate);
+  }
+
+  // 1. Pricing table spans (Dates & Prices page)
+  var priceSpans = document.querySelectorAll('.rds-price');
+  if (priceSpans.length > 0) {
+    var xhr1 = new XMLHttpRequest();
+    xhr1.open('GET', PRICES_URL, true);
+    xhr1.timeout = 10000;
+    xhr1.onload = function () {
+      if (xhr1.status < 200 || xhr1.status >= 300) return;
+      try {
+        var tours = JSON.parse(xhr1.responseText).tours || {};
+        for (var i = 0; i < priceSpans.length; i++) {
+          var s = priceSpans[i];
+          var tour = tours[s.getAttribute('data-tour')];
+          if (!tour) continue;
+          var val = tour[s.getAttribute('data-field')] || '';
+          if (!val || val === '-' || val === '0') { s.textContent = '\u2014'; continue; }
+          var n = parseInt(val.toString().replace(/[^0-9-]/g, ''), 10);
+          if (isNaN(n)) { s.textContent = '\u2014'; continue; }
+          s.textContent = n < 0
+            ? 'ZAR -' + Math.abs(n).toLocaleString('en-ZA')
+            : 'ZAR ' + n.toLocaleString('en-ZA');
+        }
+      } catch (e) {}
+    };
+    xhr1.send();
+  }
+
+  // 2. Tour page dates and prices
+  var dateDivs = document.querySelectorAll('.rds-dates');
+  var priceDivs = document.querySelectorAll('.rds-tour-prices');
+
+  if (dateDivs.length > 0 || priceDivs.length > 0) {
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', AVAIL_URL, true);
+    xhr2.timeout = 10000;
+    xhr2.onload = function () {
+      if (xhr2.status < 200 || xhr2.status >= 300) return;
+      try {
+        var data = JSON.parse(xhr2.responseText);
+        var departures = data.departures || [];
+        var now = new Date();
+
+        // Dates
+        for (var i = 0; i < dateDivs.length; i++) {
+          var div = dateDivs[i];
+          var tourId = div.getAttribute('data-tour');
+          var lines = [];
+
+          for (var j = 0; j < departures.length; j++) {
+            var dep = departures[j];
+            if (dep.tour_id !== tourId) continue;
+
+            var depDate = parseDate(dep.departure_date);
+            if (!depDate || depDate < now) continue;
+
+            var range = formatRange(dep.departure_date, dep.tour_end_date);
+            if (!range) continue;
+
+            if (dep.tour_status.toLowerCase() === 'waitlist') {
+              range += ' \u2014 <em>Waitlist</em>';
+            }
+            lines.push(range);
+          }
+
+          div.innerHTML = lines.length > 0
+            ? lines.join('<br>')
+            : 'No upcoming dates \u2014 <a href="/contact-us/">contact us</a> for availability.';
+        }
+
+        // Prices (use first departure for this tour to get pricing)
+        for (var k = 0; k < priceDivs.length; k++) {
+          var pDiv = priceDivs[k];
+          var pTourId = pDiv.getAttribute('data-tour');
+          var tourData = null;
+
+          for (var l = 0; l < departures.length; l++) {
+            if (departures[l].tour_id === pTourId) {
+              tourData = departures[l];
+              break;
+            }
+          }
+
+          if (!tourData) {
+            pDiv.textContent = '';
+            continue;
+          }
+
+          var priceLines = [];
+          if (tourData.base_price) priceLines.push('Rider (sharing): ' + fmt(tourData.base_price));
+          if (tourData.pillion) priceLines.push('Pillion: ' + fmt(tourData.pillion));
+          if (tourData.shared_room_discount) priceLines.push('Shared room discount: ' + fmt(tourData.shared_room_discount));
+          pDiv.innerHTML = priceLines.join('<br>');
+        }
+      } catch (e) {}
+    };
+    xhr2.send();
+  }
+})();
+</script>
