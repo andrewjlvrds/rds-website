@@ -106,12 +106,32 @@
   var step = 1;
   var form = {
     firstName:'', lastName:'', email:'', phone:'', country:'',
-    tour:'', departureDate:'', sharedRoomName:'', addPillion:'', bike:'',
+    tourCategory:'', tourVariant:'', departureDate:'', customDescription:'',
+    sharedRoomName:'', addPillion:'', bike:'',
     yearsRiding:'', bikeExperience:'', previousTours:'',
     onroad:'', offroad:'',
     licence:false, seatHeight:'',
     medical:'', anythingElse:'', referral:'', terms:false
   };
+
+  var TOUR_CATEGORIES = [
+    {v:'feast', l:'Feast of Southern Africa'},
+    {v:'edge', l:'Edge of Africa'},
+    {v:'oneday', l:'1-Day Tour from Cape Town'},
+    {v:'custom', l:'Custom Tour'}
+  ];
+  var TOUR_VARIANTS = {
+    feast: [
+      {v:'feast-21', l:'21 days \u2014 Cape Town to Victoria Falls', default:true},
+      {v:'feast-15', l:'15 days \u2014 Cape Town to Windhoek'}
+    ],
+    edge: [
+      {v:'edge-14', l:'14 days \u2014 Cape Town to Kruger Park'},
+      {v:'edge-12', l:'12 days \u2014 Kruger Park to Cape Town'}
+    ]
+  };
+  // Categories that need departure dates, pricing, bike selection
+  var FULL_TOUR = {feast:true, edge:true};
 
   var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK','USA','Other'];
   var BIKES_STD = [
@@ -142,8 +162,8 @@
   }
 
   function getDeps() {
-    if (!tourData || !form.tour) return [];
-    return tourData.departures.filter(function(d) { return d.tour_name === form.tour; });
+    if (!tourData || !form.tourVariant) return [];
+    return tourData.departures.filter(function(d) { return d.tour_id === form.tourVariant; });
   }
   function getSelDep() {
     if (!form.departureDate) return null;
@@ -270,18 +290,26 @@
   // ── Step 2 ──
   function renderStep2() {
     var h = '<h2>Tour & Bike</h2><p class="sub">Choose your tour, departure, accommodation preferences, and motorcycle.</p>';
+    var isFull = FULL_TOUR[form.tourCategory];
 
-    // Tour select
-    var tourOpts = [{v:'',l:'Select a tour'}];
-    if (tourData) {
-      for (var i = 0; i < tourData.tour_names.length; i++) {
-        tourOpts.push({v:tourData.tour_names[i], l:tourData.tour_names[i]});
-      }
+    // Tour category
+    var catOpts = [{v:'',l:'Select a tour'}];
+    for (var i = 0; i < TOUR_CATEGORIES.length; i++) catOpts.push(TOUR_CATEGORIES[i]);
+    h += '<div style="margin-top:20px">' + selectHtml('tourCategory','Which Tour are you interested in?',true,catOpts,form.tourCategory) + '</div>';
+
+    // Tour variant (Feast/Edge only)
+    if (TOUR_VARIANTS[form.tourCategory]) {
+      var variants = TOUR_VARIANTS[form.tourCategory];
+      h += '<div style="margin-top:20px">';
+      h += radioGroupHtml('tourVariant','Tour option',true,
+        variants.map(function(v){return v.l;}),
+        (function(){ for(var i=0;i<variants.length;i++){if(variants[i].v===form.tourVariant)return variants[i].l;} return ''; })()
+      );
+      h += '</div>';
     }
-    h += '<div style="margin-top:20px">' + selectHtml('tour','Which Tour are you booking?',true,tourOpts,form.tour) + '</div>';
 
-    // Departure dates
-    if (form.tour) {
+    // Departure dates (Feast/Edge only, after variant selected)
+    if (isFull && form.tourVariant) {
       var deps = getDeps();
       var dateOpts = [{v:'',l:'Select a departure date'}];
       for (var i = 0; i < deps.length; i++) {
@@ -291,64 +319,73 @@
         dateOpts.push({v:deps[i].departure_date, l:lbl});
       }
       h += '<div style="margin-top:20px">' + selectHtml('departureDate','Departure Date',true,dateOpts,form.departureDate) + '</div>';
-    }
 
-    // Waitlist banner
-    var dep = getSelDep();
-    if (dep && dep.tour_status.toLowerCase() === 'waitlist') {
-      h += '<div class="waitlist">This departure is on the waitlist. We\u2019ll confirm availability when we get in touch.</div>';
-    }
-
-    // Shared room
-    h += inputHtml('sharedRoomName','Sharing a room with someone? Enter their name',false,'text',form.sharedRoomName,'Leave blank for your own room');
-
-    // Pillion
-    h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
-
-    // Motorcycle preference
-    h += '<div style="margin-top:24px"><label class="field-label">Motorcycle Preference<span class="req">*</span></label>';
-    h += '<p class="helper">Standard options included in the tour price. Upgrades available where shown.</p>';
-    h += '<div class="radio-group" id="bikeGroup">';
-
-    h += '<div class="bike-section">Standard (included)</div>';
-    for (var i = 0; i < BIKES_STD.length; i++) {
-      var on = form.bike === BIKES_STD[i].v ? ' on' : '';
-      h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_STD[i].v + '">';
-      h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
-      h += '<span class="radio-text">' + BIKES_STD[i].l + '</span></div>';
-    }
-
-    if (dep && (dep.bike_upgrade_crf1100 || dep.bike_upgrade_bmw1250gs)) {
-      h += '<div class="bike-section bike-divider">Upgrades</div>';
-      for (var i = 0; i < BIKES_UP.length; i++) {
-        var amt = dep ? Number(dep[BIKES_UP[i].k]) || 0 : 0;
-        if (!amt) continue;
-        var on = form.bike === BIKES_UP[i].v ? ' on' : '';
-        h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_UP[i].v + '">';
-        h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
-        h += '<span class="radio-text" style="flex:1">' + BIKES_UP[i].l + '</span>';
-        h += '<span class="radio-price">+ ' + fmt(amt) + '</span></div>';
+      // Waitlist banner
+      var dep = getSelDep();
+      if (dep && dep.tour_status.toLowerCase() === 'waitlist') {
+        h += '<div class="waitlist">This departure is on the waitlist. We\u2019ll confirm availability when we get in touch.</div>';
       }
     }
 
-    h += '<div class="bike-section bike-divider">Other</div>';
-    var ownOn = form.bike === 'own' ? ' on' : '';
-    h += '<div class="radio-item' + ownOn + '" data-radio="bike" data-val="own">';
-    h += '<div class="radio-dot' + ownOn + '"><div class="radio-dot-inner"></div></div>';
-    h += '<span class="radio-text">Own Bike</span></div>';
-    h += '</div></div>';
+    // Custom / 1-day description
+    if (form.tourCategory === 'custom') {
+      h += textareaHtml('customDescription','Tell us what you have in mind',true,form.customDescription,'Countries, duration, group size, any specific interests...');
+    }
+    if (form.tourCategory === 'oneday') {
+      h += textareaHtml('customDescription','What are you interested in?',true,form.customDescription,'e.g. Cape Peninsula, Winelands, West Coast \u2014 or tell us what you\u2019re after');
+    }
 
-    // Pricing card
-    if (dep) {
-      var p = getPricing();
-      h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
-      h += '<div class="price-row"><span>Rider (base price)</span><span class="price-val">' + fmt(p.base) + '</span></div>';
-      if (p.upgrade > 0) h += '<div class="price-row"><span>Motorcycle upgrade</span><span class="price-val">+ ' + fmt(p.upgrade) + '</span></div>';
-      if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
-      if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';
-      h += '<div class="price-row price-total"><span style="font-weight:600;color:#e0e0e0">Total</span><span class="price-val" style="color:#D97B2B;font-weight:700;font-size:18px">' + fmt(p.total) + '</span></div>';
-      h += '<p class="price-note">No payment required now \u2014 we\u2019ll send booking details and a payment link after reviewing your request.</p>';
-      h += '</div>';
+    // Shared room, pillion, bike, pricing — only for full tours
+    if (isFull) {
+      h += inputHtml('sharedRoomName','Sharing a room with someone? Enter their name',false,'text',form.sharedRoomName,'Leave blank for your own room');
+      h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
+
+      // Motorcycle preference
+      var dep = getSelDep();
+      h += '<div style="margin-top:24px"><label class="field-label">Motorcycle Preference<span class="req">*</span></label>';
+      h += '<p class="helper">Standard options included in the tour price. Upgrades available where shown.</p>';
+      h += '<div class="radio-group" id="bikeGroup">';
+
+      h += '<div class="bike-section">Standard (included)</div>';
+      for (var i = 0; i < BIKES_STD.length; i++) {
+        var on = form.bike === BIKES_STD[i].v ? ' on' : '';
+        h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_STD[i].v + '">';
+        h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
+        h += '<span class="radio-text">' + BIKES_STD[i].l + '</span></div>';
+      }
+
+      if (dep && (dep.bike_upgrade_crf1100 || dep.bike_upgrade_bmw1250gs)) {
+        h += '<div class="bike-section bike-divider">Upgrades</div>';
+        for (var i = 0; i < BIKES_UP.length; i++) {
+          var amt = dep ? Number(dep[BIKES_UP[i].k]) || 0 : 0;
+          if (!amt) continue;
+          var on = form.bike === BIKES_UP[i].v ? ' on' : '';
+          h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_UP[i].v + '">';
+          h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
+          h += '<span class="radio-text" style="flex:1">' + BIKES_UP[i].l + '</span>';
+          h += '<span class="radio-price">+ ' + fmt(amt) + '</span></div>';
+        }
+      }
+
+      h += '<div class="bike-section bike-divider">Other</div>';
+      var ownOn = form.bike === 'own' ? ' on' : '';
+      h += '<div class="radio-item' + ownOn + '" data-radio="bike" data-val="own">';
+      h += '<div class="radio-dot' + ownOn + '"><div class="radio-dot-inner"></div></div>';
+      h += '<span class="radio-text">Own Bike</span></div>';
+      h += '</div></div>';
+
+      // Pricing card
+      if (dep) {
+        var p = getPricing();
+        h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
+        h += '<div class="price-row"><span>Rider (base price)</span><span class="price-val">' + fmt(p.base) + '</span></div>';
+        if (p.upgrade > 0) h += '<div class="price-row"><span>Motorcycle upgrade</span><span class="price-val">+ ' + fmt(p.upgrade) + '</span></div>';
+        if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
+        if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';
+        h += '<div class="price-row price-total"><span style="font-weight:600;color:#e0e0e0">Total</span><span class="price-val" style="color:#D97B2B;font-weight:700;font-size:18px">' + fmt(p.total) + '</span></div>';
+        h += '<p class="price-note">No payment required now \u2014 we\u2019ll send booking details and a payment link after reviewing your request.</p>';
+        h += '</div>';
+      }
     }
 
     h += '<div class="btns"><button class="btn-s" id="btnBack2">Back</button><button class="btn-p" id="btnNext2">Next: Riding Experience</button></div>';
@@ -397,23 +434,42 @@
     h += '</div></div>';
 
     // Summary
+    var isFull = FULL_TOUR[form.tourCategory];
     var dep = getSelDep();
-    if (dep) {
-      var p = getPricing();
+
+    h += '<div class="price-card" style="margin-top:28px"><div class="price-head">Booking Summary</div>';
+    h += '<div class="sum-row"><span class="sum-lbl">Name</span><span>' + escHtml(form.firstName + ' ' + form.lastName) + '</span></div>';
+
+    // Tour name
+    var catLabel = '';
+    for (var i = 0; i < TOUR_CATEGORIES.length; i++) { if (TOUR_CATEGORIES[i].v === form.tourCategory) { catLabel = TOUR_CATEGORIES[i].l; break; } }
+    h += '<div class="sum-row"><span class="sum-lbl">Tour</span><span>' + escHtml(catLabel) + '</span></div>';
+
+    if (isFull && form.tourVariant && TOUR_VARIANTS[form.tourCategory]) {
+      var varLabel = form.tourVariant;
+      var variants = TOUR_VARIANTS[form.tourCategory];
+      for (var i = 0; i < variants.length; i++) { if (variants[i].v === form.tourVariant) { varLabel = variants[i].l; break; } }
+      h += '<div class="sum-row"><span class="sum-lbl">Option</span><span>' + escHtml(varLabel) + '</span></div>';
+    }
+    if (isFull && form.departureDate) {
+      h += '<div class="sum-row"><span class="sum-lbl">Departure</span><span>' + fmtDate(form.departureDate) + '</span></div>';
+    }
+    if (isFull && form.bike) {
       var allBikes = BIKES_STD.concat(BIKES_UP).concat([{v:'own',l:'Own Bike'}]);
       var bikeName = form.bike;
       for (var i = 0; i < allBikes.length; i++) { if (allBikes[i].v === form.bike) { bikeName = allBikes[i].l; break; } }
-
-      h += '<div class="price-card" style="margin-top:28px"><div class="price-head">Booking Summary</div>';
-      h += '<div class="sum-row"><span class="sum-lbl">Name</span><span>' + escHtml(form.firstName + ' ' + form.lastName) + '</span></div>';
-      h += '<div class="sum-row"><span class="sum-lbl">Tour</span><span>' + escHtml(form.tour) + '</span></div>';
-      h += '<div class="sum-row"><span class="sum-lbl">Departure</span><span>' + fmtDate(form.departureDate) + '</span></div>';
       h += '<div class="sum-row"><span class="sum-lbl">Motorcycle</span><span>' + escHtml(bikeName) + '</span></div>';
-      if (form.sharedRoomName.trim()) h += '<div class="sum-row"><span class="sum-lbl">Sharing with</span><span>' + escHtml(form.sharedRoomName) + '</span></div>';
-      if (form.addPillion === 'Yes') h += '<div class="sum-row"><span class="sum-lbl">Pillion</span><span>Yes</span></div>';
-      h += '<div class="sum-row" style="border-top:1px solid #252525;padding-top:10px;margin-top:6px"><span style="color:#999;font-weight:600">Total</span><span style="color:#D97B2B;font-weight:700">' + fmt(p.total) + '</span></div>';
-      h += '</div>';
     }
+    if (isFull && form.sharedRoomName.trim()) h += '<div class="sum-row"><span class="sum-lbl">Sharing with</span><span>' + escHtml(form.sharedRoomName) + '</span></div>';
+    if (isFull && form.addPillion === 'Yes') h += '<div class="sum-row"><span class="sum-lbl">Pillion</span><span>Yes</span></div>';
+    if (isFull && dep) {
+      var p = getPricing();
+      h += '<div class="sum-row" style="border-top:1px solid #252525;padding-top:10px;margin-top:6px"><span style="color:#999;font-weight:600">Total</span><span style="color:#D97B2B;font-weight:700">' + fmt(p.total) + '</span></div>';
+    }
+    if (!isFull && form.customDescription.trim()) {
+      h += '<div class="sum-row"><span class="sum-lbl">Details</span><span>' + escHtml(form.customDescription.substring(0,80)) + (form.customDescription.length > 80 ? '...' : '') + '</span></div>';
+    }
+    h += '</div>';
 
     h += '<div id="submitError"></div>';
     h += '<div class="btns"><button class="btn-s" id="btnBack3">Back</button><button class="btn-p" id="btnSubmit">Request My Booking</button></div>';
@@ -431,10 +487,15 @@
       if (!form.country) e.push('country');
     }
     if (s >= 2) {
-      if (!form.tour) e.push('tour');
-      if (!form.departureDate) e.push('departureDate');
-      if (!form.addPillion) e.push('addPillion');
-      if (!form.bike) e.push('bike');
+      if (!form.tourCategory) e.push('tourCategory');
+      var isFull = FULL_TOUR[form.tourCategory];
+      if (isFull) {
+        if (!form.tourVariant) e.push('tourVariant');
+        if (!form.departureDate) e.push('departureDate');
+        if (!form.addPillion) e.push('addPillion');
+        if (!form.bike) e.push('bike');
+      }
+      if ((form.tourCategory === 'custom' || form.tourCategory === 'oneday') && !form.customDescription.trim()) e.push('customDescription');
     }
     if (s >= 3) {
       if (!form.yearsRiding) e.push('yearsRiding');
@@ -453,7 +514,7 @@
   // ── Event binding ──
   function bindEvents() {
     // Read form values from DOM
-    var fields = ['firstName','lastName','email','phone','country','tour','departureDate','sharedRoomName','yearsRiding','bikeExperience','previousTours','medical','anythingElse','referral'];
+    var fields = ['firstName','lastName','email','phone','country','tourCategory','departureDate','sharedRoomName','customDescription','yearsRiding','bikeExperience','previousTours','medical','anythingElse','referral'];
     for (var i = 0; i < fields.length; i++) {
       (function(field) {
         var el = document.getElementById(field);
@@ -461,7 +522,21 @@
           el.addEventListener('input', function() { form[field] = el.value; });
           el.addEventListener('change', function() {
             form[field] = el.value;
-            if (field === 'tour') { form.departureDate = ''; form.bike = ''; render(); }
+            if (field === 'tourCategory') {
+              form.tourVariant = '';
+              form.departureDate = '';
+              form.bike = '';
+              form.addPillion = '';
+              form.customDescription = '';
+              // Auto-select default variant
+              if (TOUR_VARIANTS[form.tourCategory]) {
+                var variants = TOUR_VARIANTS[form.tourCategory];
+                for (var j = 0; j < variants.length; j++) {
+                  if (variants[j].default) { form.tourVariant = variants[j].v; break; }
+                }
+              }
+              render();
+            }
             if (field === 'departureDate') render();
             if (field === 'sharedRoomName') render();
           });
@@ -469,13 +544,23 @@
       })(fields[i]);
     }
 
-    // Radio buttons
+    // Radio buttons — handle tourVariant specially (maps label back to value)
     var radios = document.querySelectorAll('[data-radio]');
     for (var i = 0; i < radios.length; i++) {
       radios[i].addEventListener('click', function() {
         var name = this.getAttribute('data-radio');
         var val = this.getAttribute('data-val');
-        form[name] = val;
+        if (name === 'tourVariant') {
+          // val is the label text, map back to tour_id
+          var variants = TOUR_VARIANTS[form.tourCategory] || [];
+          for (var j = 0; j < variants.length; j++) {
+            if (variants[j].l === val) { form.tourVariant = variants[j].v; break; }
+          }
+          form.departureDate = '';
+          form.bike = '';
+        } else {
+          form[name] = val;
+        }
         render();
       });
     }
@@ -526,14 +611,27 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
     document.getElementById('submitError').innerHTML = '';
 
+    // Build tour name for Zoho from category + variant
+    var tourName = '';
+    if (form.tourCategory === 'custom') tourName = 'Custom Tour';
+    else if (form.tourCategory === 'oneday') tourName = '1-Day Tour';
+    else {
+      var dep = getSelDep();
+      tourName = dep ? dep.tour_name : form.tourVariant;
+    }
+
     var dep = getSelDep();
     var p = getPricing();
 
     var payload = {
       firstName: form.firstName, lastName: form.lastName, email: form.email,
       phone: form.phone, country: form.country,
-      tour: form.tour, departureDate: form.departureDate,
+      tourCategory: form.tourCategory,
+      tourVariant: form.tourVariant,
+      tour: tourName,
+      departureDate: form.departureDate,
       tourEndDate: dep ? dep.tour_end_date : '',
+      customDescription: form.customDescription,
       sharedRoomName: form.sharedRoomName, addPillion: form.addPillion, bike: form.bike,
       basePrice: p.base, upgradeAmount: p.upgrade, pillionAmount: p.pillion, sharedRoomDiscount: p.shared,
       yearsRiding: form.yearsRiding, bikeExperience: form.bikeExperience,
