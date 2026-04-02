@@ -129,7 +129,7 @@ export default async function handler(req, res) {
 
       // Auto-set
       Booking_Date: new Date().toISOString().split("T")[0],
-      Booking_Status: "New",
+      Booking_Status: "New Booking",
     };
 
     // Link to Tour record if found
@@ -222,3 +222,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
