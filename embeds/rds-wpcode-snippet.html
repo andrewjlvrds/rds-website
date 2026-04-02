@@ -94,6 +94,7 @@
         for (var i = 0; i < dateDivs.length; i++) {
           var div = dateDivs[i];
           var tourId = div.getAttribute('data-tour');
+          var label = div.getAttribute('data-label') || '';
           var lines = [];
 
           for (var j = 0; j < departures.length; j++) {
@@ -112,9 +113,14 @@
             lines.push(range);
           }
 
-          div.innerHTML = lines.length > 0
-            ? lines.join('<br>')
-            : 'No upcoming dates \u2014 <a href="/contact-us/">contact us</a> for availability.';
+          var html = '';
+          if (label) html += '<strong>' + label + '</strong><br>';
+          if (lines.length > 0) {
+            html += lines.join('<br>');
+          } else {
+            html += 'No upcoming dates \u2014 <a href="/contact-us/">contact us</a> for availability.';
+          }
+          div.innerHTML = html;
         }
 
         // Prices (use first departure for this tour to get pricing)
