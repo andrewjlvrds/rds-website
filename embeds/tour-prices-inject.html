@@ -1,0 +1,70 @@
+<script>
+(function () {
+  var API_URL = 'https://rds-website-orcin.vercel.app/api/tour-prices';
+
+  var TOUR_MAP = {
+    'feast of southern africa: 21 days': 'feast-21',
+    'feast of southern africa: 20 days': 'feast-20',
+    'feast of southern africa: 20-day': 'feast-20',
+    'feast of southern africa: 15 days': 'feast-15',
+    'edge of africa: 14-days': 'edge-14',
+    'edge of africa: 14 days': 'edge-14',
+    'edge of africa 12-days': 'edge-12',
+    'edge of africa: 12 days': 'edge-12',
+    'great lakes & rift valley ride 24-days': 'greatlakes-24',
+    'great lakes & rift valley: 24 days': 'greatlakes-24',
+    'great lakes & rift valley ride 14-days': 'greatlakes-14',
+    'great lakes & rift valley: 14 days': 'greatlakes-14',
+    'best of namibia: 13 days': 'bon-13'
+  };
+
+  function fmt(val) {
+    if (!val || val === '-' || val === '0') return '';
+    var n = parseInt(val.toString().replace(/[^0-9-]/g, ''), 10);
+    if (isNaN(n)) return '';
+    if (n < 0) return 'ZAR -' + Math.abs(n).toLocaleString('en-ZA');
+    return 'ZAR ' + n.toLocaleString('en-ZA');
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', API_URL, true);
+  xhr.timeout = 10000;
+  xhr.onload = function () {
+    if (xhr.status < 200 || xhr.status >= 300) return;
+    try {
+      var data = JSON.parse(xhr.responseText);
+      var tours = data.tours || {};
+      var rows = document.querySelectorAll('tr.tve_table_row');
+
+      for (var i = 0; i < rows.length; i++) {
+        var link = rows[i].querySelector('a');
+        if (!link) continue;
+
+        var name = link.textContent.trim().toLowerCase();
+        var tourId = TOUR_MAP[name];
+        if (!tourId || !tours[tourId]) continue;
+
+        var t = tours[tourId];
+        var cells = rows[i].querySelectorAll('td.tve_table_cell');
+
+        for (var j = 0; j < cells.length; j++) {
+          var th = (cells[j].getAttribute('data-th') || '').toLowerCase();
+
+          if (th.indexOf('tour price') > -1 || th.indexOf('minimum') > -1 || th.indexOf('minumum') > -1) {
+            cells[j].textContent = fmt(t.base_price);
+          } else if (th === 'pillion') {
+            cells[j].textContent = fmt(t.pillion);
+          } else if (th === 'singlesupplement') {
+            cells[j].textContent = fmt(t.shared_room_discount);
+          } else if (th.indexOf('honda') > -1 || th.indexOf('crf') > -1) {
+            cells[j].textContent = fmt(t.bike_upgrade_crf1100);
+          } else if (th.indexOf('bmw') > -1 || th.indexOf('1250') > -1) {
+            cells[j].textContent = fmt(t.bike_upgrade_bmw1250gs);
+          }
+        }
+      }
+    } catch (e) {}
+  };
+  xhr.send();
+})();
+</script>
