@@ -1,0 +1,206 @@
+<!--
+  RDS Tour Pricing Embed
+  Paste this into a WordPress HTML block on the Dates & Prices page.
+  Replaces SheetDB shortcodes with a direct Vercel API call.
+
+  Update TOUR_CONFIG below to change tour order, display names, or page links.
+  Update API_URL if the Vercel domain changes.
+-->
+
+<div id="rds-pricing-table" style="width:100%;overflow-x:auto;">
+  <p style="text-align:center;color:#666;padding:20px 0;">Loading tour prices…</p>
+</div>
+
+<style>
+  #rds-pricing-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Montserrat', sans-serif;
+    color: #070e12;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  #rds-pricing-table thead th {
+    background: #070e12;
+    color: #fff;
+    text-align: left;
+    padding: 14px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  #rds-pricing-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+  }
+  #rds-pricing-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  #rds-pricing-table tbody tr:hover {
+    background: #f9f9f9;
+  }
+  #rds-pricing-table .tour-name-link {
+    color: #e87c1e;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  #rds-pricing-table .tour-name-link:hover {
+    text-decoration: underline;
+  }
+  #rds-pricing-table .price-cell {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  #rds-pricing-table .rds-error {
+    text-align: center;
+    color: #666;
+    padding: 30px 20px;
+    font-family: 'Montserrat', sans-serif;
+  }
+  #rds-pricing-table .rds-error a {
+    color: #e87c1e;
+  }
+
+  @media (max-width: 768px) {
+    #rds-pricing-table table {
+      font-size: 13px;
+    }
+    #rds-pricing-table thead th,
+    #rds-pricing-table tbody td {
+      padding: 10px 8px;
+    }
+  }
+</style>
+
+<script>
+(function () {
+  // ── CONFIG ─────────────────────────────────────────────────
+  // Change the Vercel URL once you know the final domain
+  var API_URL = 'https://rds-website.vercel.app/api/tour-prices';
+
+  // Tour display order and page links — edit as needed
+  var TOUR_CONFIG = [
+    {
+      tour_id: 'feast-20',
+      display_name: 'Feast of Southern Africa: 20 days',
+      page_url: '/feast-of-southern-africa/'
+    },
+    {
+      tour_id: 'feast-15',
+      display_name: 'Feast of Southern Africa: 15 days',
+      page_url: '/feast-of-southern-africa-15-day/'
+    },
+    {
+      tour_id: 'edge-14',
+      display_name: 'Edge of Africa: 14 days',
+      page_url: '/edge-of-africa/'
+    },
+    {
+      tour_id: 'edge-12',
+      display_name: 'Edge of Africa: 12 days',
+      page_url: '/edge-of-africa-12-day/'
+    },
+    {
+      tour_id: 'bon-13',
+      display_name: 'Best of Namibia: 13 days',
+      page_url: '/best-of-namibia/'
+    },
+    {
+      tour_id: 'greatlakes-24',
+      display_name: 'Great Lakes & Rift Valley: 24 days',
+      page_url: '/great-lakes-rift-valley/'
+    },
+    {
+      tour_id: 'greatlakes-14',
+      display_name: 'Great Lakes & Rift Valley: 14 days',
+      page_url: '/great-lakes-rift-valley-14-day/'
+    }
+  ];
+  // ── END CONFIG ─────────────────────────────────────────────
+
+  var container = document.getElementById('rds-pricing-table');
+
+  function formatPrice(value) {
+    if (!value || value === '-' || value === '0') return '—';
+    var num = parseInt(value.toString().replace(/[^0-9-]/g, ''), 10);
+    if (isNaN(num)) return '—';
+    if (num < 0) return '- R ' + Math.abs(num).toLocaleString('en-ZA');
+    return 'R ' + num.toLocaleString('en-ZA');
+  }
+
+  function renderTable(data) {
+    var tours = data.tours || {};
+    var html = '<table>';
+
+    html += '<thead><tr>';
+    html += '<th>Tour</th>';
+    html += '<th>Rider</th>';
+    html += '<th>Pillion / Passenger</th>';
+    html += '<th>Shared Room Discount</th>';
+    html += '<th>Honda CRF1100 Upgrade</th>';
+    html += '<th>BMW 1250GS Upgrade</th>';
+    html += '</tr></thead>';
+
+    html += '<tbody>';
+    for (var i = 0; i < TOUR_CONFIG.length; i++) {
+      var config = TOUR_CONFIG[i];
+      var tour = tours[config.tour_id];
+
+      html += '<tr>';
+
+      // Tour name (linked)
+      html += '<td>';
+      if (config.page_url) {
+        html += '<a class="tour-name-link" href="' + config.page_url + '">';
+        html += config.display_name;
+        html += '</a>';
+      } else {
+        html += config.display_name;
+      }
+      html += '</td>';
+
+      if (tour) {
+        html += '<td class="price-cell">' + formatPrice(tour.base_price) + '</td>';
+        html += '<td class="price-cell">' + formatPrice(tour.pillion) + '</td>';
+        html += '<td class="price-cell">' + formatPrice(tour.shared_room_discount) + '</td>';
+        html += '<td class="price-cell">' + formatPrice(tour.bike_upgrade_crf1100) + '</td>';
+        html += '<td class="price-cell">' + formatPrice(tour.bike_upgrade_bmw1250gs) + '</td>';
+      } else {
+        html += '<td colspan="5" style="color:#999;">Pricing not yet available</td>';
+      }
+
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+
+    container.innerHTML = html;
+  }
+
+  function renderError() {
+    container.innerHTML = '<p class="rds-error">Unable to load prices right now — please contact <a href="mailto:andrew@ridedownsouth.com">andrew@ridedownsouth.com</a> for current pricing.</p>';
+  }
+
+  // Fetch pricing data
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', API_URL, true);
+  xhr.timeout = 10000;
+  xhr.onload = function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        renderTable(data);
+      } catch (e) {
+        renderError();
+      }
+    } else {
+      renderError();
+    }
+  };
+  xhr.onerror = renderError;
+  xhr.ontimeout = renderError;
+  xhr.send();
+})();
+</script>

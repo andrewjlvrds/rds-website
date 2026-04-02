@@ -1,0 +1,12 @@
+{
+  "name": "rds-website",
+  "version": "1.0.0",
+  "description": "RDS tour pricing API and booking form",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}
