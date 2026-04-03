@@ -123,7 +123,7 @@
   var TOUR_VARIANTS = {
     feast: [
       {v:'feast-21', l:'21 days \u2014 Cape Town to Victoria Falls', default:true},
-      {v:'feast-15', l:'15 days \u2014 Cape Town to Windhoek'}
+      {v:'feast-16', l:'16 days \u2014 Cape Town to Windhoek'}
     ],
     edge: [
       {v:'edge-14', l:'14 days \u2014 Cape Town to Kruger Park'},
@@ -322,9 +322,9 @@
       var deps = getDeps();
       var dateOpts = [{v:'',l:'Select a departure date'}];
       for (var i = 0; i < deps.length; i++) {
-        var lbl = fmtDate(deps[i].departure_date) + ' \u2014 ' + fmtDate(deps[i].tour_end_date);
+        var lbl = fmtDate(deps[i].departure_date);
+        if (deps[i].tour_end_date) lbl += ' \u2014 ' + fmtDate(deps[i].tour_end_date);
         if (deps[i].tour_status.toLowerCase() === 'waitlist') lbl += ' (Waitlist)';
-        else if (deps[i].places_available) lbl += ' \u2014 ' + deps[i].places_available + ' places';
         dateOpts.push({v:deps[i].departure_date, l:lbl});
       }
       h += '<div style="margin-top:20px">' + selectHtml('departureDate','Departure Date',true,dateOpts,form.departureDate) + '</div>';
