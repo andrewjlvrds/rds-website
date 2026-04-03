@@ -3,6 +3,7 @@ import { getZohoToken, zohoSearch, ZOHO_API, corsHeaders } from "./_zoho.js";
 // Tour type mapping: form tour name → Zoho Tour_Type pick list value
 var TOUR_TYPE_MAP = {
   "Feast of Southern Africa: 21 days": "FoSA 21",
+  "Feast of Southern Africa: 16 days": "FoSA 16",
   "Feast of Southern Africa: 15 days": "FoSA 15",
   "Edge of Africa: 14 days": "Edge 14",
   "Edge of Africa: 12 days": "Edge 12",
