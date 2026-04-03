@@ -103,6 +103,7 @@
 
   // State
   var tourData = null;
+  var fxRates = null;
   var step = 1;
   var form = {
     firstName:'', lastName:'', email:'', phone:'', country:'',
@@ -147,6 +148,54 @@
   var ONROAD = ['Beginner \u2014 I\u2019m new at road touring','Intermediate \u2014 I\u2019ve got some limited road touring experience','Experienced \u2014 I\u2019ve done lots of road tours'];
   var OFFROAD = ['No gravel roads please','Beginner \u2014 still finding my way on gravel/dirt surfaces','Intermediate \u2014 I\u2019m comfortable on non-tarred surfaces','Experienced \u2014 I eat gravel roads for breakfast'];
   var REFERRAL = ['Google search','Social media','Friend or family referral','Magazine or publication','YouTube','Motorcycle club or forum','Repeat customer','Other'];
+
+  var COUNTRY_CURRENCY = {
+    'USA':'USD','Canada':'CAD','UK':'GBP','Ireland':'GBP',
+    'Australia':'AUD','New Zealand':'NZD',
+    'Germany':'EUR','France':'EUR','Italy':'EUR','Spain':'EUR',
+    'Netherlands':'EUR','Belgium':'EUR','Austria':'EUR','Finland':'EUR',
+    'Denmark':'DKK','Norway':'NOK','Sweden':'SEK','Switzerland':'CHF',
+    'South Africa':'ZAR'
+  };
+  var CURRENCY_SYMBOLS = {
+    'USD':'US$','CAD':'CA$','GBP':'\u00a3','AUD':'AU$','NZD':'NZ$',
+    'EUR':'\u20ac','CHF':'CHF','DKK':'DKK','NOK':'NOK','SEK':'SEK'
+  };
+
+  function getLocalCurrency() {
+    if (!form.country || form.country === 'South Africa' || form.country === 'Other') return null;
+    return COUNTRY_CURRENCY[form.country] || null;
+  }
+
+  function fmtLocal(zarAmount) {
+    var cur = getLocalCurrency();
+    if (!cur || !fxRates || !fxRates[cur]) return '';
+    var rate = fxRates[cur];
+    var converted = Math.round(zarAmount * rate);
+    var sym = CURRENCY_SYMBOLS[cur] || cur;
+    return 'Approx. ' + sym + ' ' + converted.toLocaleString('en');
+  }
+
+  // Fetch FX rates (ZAR base)
+  fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/zar.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.zar) {
+        fxRates = {};
+        var map = data.zar;
+        if (map.usd) fxRates['USD'] = map.usd;
+        if (map.cad) fxRates['CAD'] = map.cad;
+        if (map.gbp) fxRates['GBP'] = map.gbp;
+        if (map.aud) fxRates['AUD'] = map.aud;
+        if (map.nzd) fxRates['NZD'] = map.nzd;
+        if (map.eur) fxRates['EUR'] = map.eur;
+        if (map.chf) fxRates['CHF'] = map.chf;
+        if (map.dkk) fxRates['DKK'] = map.dkk;
+        if (map.nok) fxRates['NOK'] = map.nok;
+        if (map.sek) fxRates['SEK'] = map.sek;
+      }
+    })
+    .catch(function() {});
 
   function fmt(n) {
     if (!n || n === '0') return '';
@@ -400,6 +449,10 @@
         if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
         if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';
         h += '<div class="price-row price-total"><span style="font-weight:600;color:#e0e0e0">Total</span><span class="price-val" style="color:#D97B2B;font-weight:700;font-size:18px">' + fmt(p.total) + '</span></div>';
+        var localEst = fmtLocal(p.total);
+        if (localEst) {
+          h += '<div style="text-align:right;font-size:12px;color:#999;margin-top:4px;font-style:italic">' + localEst + ' at today\u2019s rate</div>';
+        }
         h += '</div>';
       }
     }
