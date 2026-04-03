@@ -79,54 +79,6 @@ module.exports = function handler(req, res) {
 
       var allTours = [];
 
-      // First pass: read bike upgrade prices from the bottom section
-      // The sheet has a "Bike Upgrade Prices" section with rows like:
-      // "Edge 14" | 13500 | 18000
-      // "FoSA 15" | 13500 | 18000
-      var upgradeMap = {};
-      var inUpgradeSection = false;
-      var upgradeCRFCol = -1;
-      var upgradeBMWCol = -1;
-
-      for (var u = 0; u < rows.length; u++) {
-        var firstCell = (rows[u][0] || '').toString().trim();
-        if (firstCell === 'Bike Upgrade Prices') {
-          inUpgradeSection = true;
-          // Next row has column headers: blank | CRF1100 | BMW1250GS
-          if (u + 1 < rows.length) {
-            for (var uc = 0; uc < rows[u+1].length; uc++) {
-              var uHeader = (rows[u+1][uc] || '').toString().trim().toLowerCase();
-              if (uHeader.indexOf('crf1100') !== -1) upgradeCRFCol = uc;
-              if (uHeader.indexOf('bmw') !== -1) upgradeBMWCol = uc;
-            }
-          }
-          u++; // skip header row
-          continue;
-        }
-        if (inUpgradeSection && firstCell) {
-          var upgKey = firstCell.toLowerCase().replace(/\s+/g, '');
-          var crfVal = (upgradeCRFCol >= 0 && rows[u][upgradeCRFCol]) ? cleanPrice(rows[u][upgradeCRFCol]) : '';
-          var bmwVal = (upgradeBMWCol >= 0 && rows[u][upgradeBMWCol]) ? cleanPrice(rows[u][upgradeBMWCol]) : '';
-          upgradeMap[upgKey] = { crf: crfVal, bmw: bmwVal };
-        }
-        if (inUpgradeSection && !firstCell) {
-          inUpgradeSection = false;
-        }
-      }
-
-      // Map tour_id prefixes to upgrade keys
-      function getUpgradeForTour(tourId) {
-        // Try exact matches first, then prefix matches
-        var id = tourId.toLowerCase();
-        if (id.indexOf('edge-14') === 0 || id.indexOf('edge-12') === 0) {
-          return upgradeMap['edge14'] || upgradeMap['edge'] || { crf:'', bmw:'' };
-        }
-        if (id.indexOf('feast-') === 0) {
-          return upgradeMap['fosa15'] || upgradeMap['fosa'] || { crf:'', bmw:'' };
-        }
-        return { crf:'', bmw:'' };
-      }
-
       for (var i = 1; i < rows.length; i++) {
         var row = rows[i];
         var tourId = getVal(row, 'tour_id');
@@ -135,8 +87,6 @@ module.exports = function handler(req, res) {
         // Only include Available and Waitlist tours
         var status = getVal(row, 'tour_status').toLowerCase();
         if (status !== 'available' && status !== 'waitlist') continue;
-
-        var upgrades = getUpgradeForTour(tourId);
 
         allTours.push({
           tour_id: tourId,
@@ -149,8 +99,8 @@ module.exports = function handler(req, res) {
           base_price: cleanPrice(getVal(row, 'base_price')),
           pillion: cleanPrice(getVal(row, 'pillion')),
           shared_room_discount: cleanPrice(getVal(row, 'shared_room_discount')),
-          bike_upgrade_crf1100: upgrades.crf,
-          bike_upgrade_bmw1250gs: upgrades.bmw
+          bike_upgrade_crf1100: cleanPrice(getVal(row, 'bike_upgrade_crf1100')),
+          bike_upgrade_bmw1250gs: cleanPrice(getVal(row, 'bike_upgrade_bmw1250gs'))
         });
       }
 
