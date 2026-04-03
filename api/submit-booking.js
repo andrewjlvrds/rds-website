@@ -108,6 +108,7 @@ module.exports = async function handler(req, res) {
       Email: (body.email || "").trim(),
       Phone_1: (body.phone || "").trim(),
       Nationality: body.country || "",
+      Nationality1: body.country || "",
 
       // Tour fields
       Which_Tour: body.tour || "",
