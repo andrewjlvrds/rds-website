@@ -139,4 +139,4 @@ function corsHeaders() {
   };
 }
 
-export { getZohoToken, zohoFetch, zohoSearch, corsHeaders, ZOHO_API };
+module.exports = { getZohoToken: getZohoToken, zohoFetch: zohoFetch, zohoSearch: zohoSearch, corsHeaders: corsHeaders, ZOHO_API: ZOHO_API };
