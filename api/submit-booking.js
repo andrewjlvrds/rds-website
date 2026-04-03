@@ -1,4 +1,8 @@
-import { getZohoToken, zohoSearch, ZOHO_API, corsHeaders } from "./_zoho.js";
+var zoho = require("./_zoho.js");
+var getZohoToken = zoho.getZohoToken;
+var zohoSearch = zoho.zohoSearch;
+var ZOHO_API = zoho.ZOHO_API;
+var corsHeaders = zoho.corsHeaders;
 
 // Tour type mapping: form tour name → Zoho Tour_Type pick list value
 var TOUR_TYPE_MAP = {
@@ -22,7 +26,7 @@ var BIKE_MAP = {
   "own": "Own Bike",
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS
   var headers = corsHeaders();
   for (var key in headers) {
