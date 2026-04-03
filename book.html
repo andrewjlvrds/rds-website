@@ -149,8 +149,9 @@
   var REFERRAL = ['Google search','Social media','Friend or family referral','Magazine or publication','YouTube','Motorcycle club or forum','Repeat customer','Other'];
 
   function fmt(n) {
-    if (!n || isNaN(Number(n))) return '';
-    var num = Number(n);
+    if (!n || n === '0') return '';
+    var num = Number(String(n).replace(/,/g, ''));
+    if (isNaN(num)) return '';
     if (num < 0) return '- ZAR ' + Math.abs(num).toLocaleString('en-ZA');
     return 'ZAR ' + num.toLocaleString('en-ZA');
   }
@@ -182,15 +183,19 @@
     }
     return null;
   }
+  function parsePrice(v) {
+    if (!v) return 0;
+    return Number(String(v).replace(/,/g, '')) || 0;
+  }
   function getPricing() {
     var dep = getSelDep();
     if (!dep) return { base:0, upgrade:0, pillion:0, shared:0, total:0 };
-    var base = Number(dep.base_price) || 0;
+    var base = parsePrice(dep.base_price);
     var upgrade = 0;
-    if (form.bike === 'crf1100' && dep.bike_upgrade_crf1100) upgrade = Number(dep.bike_upgrade_crf1100) || 0;
-    if (form.bike === 'bmw1250gs' && dep.bike_upgrade_bmw1250gs) upgrade = Number(dep.bike_upgrade_bmw1250gs) || 0;
-    var pillion = (form.addPillion === 'Yes' && dep.pillion) ? (Number(dep.pillion) || 0) : 0;
-    var shared = (form.roomType !== 'Single' && dep.shared_room_discount) ? (Number(dep.shared_room_discount) || 0) : 0;
+    if (form.bike === 'crf1100') upgrade = parsePrice(dep.bike_upgrade_crf1100);
+    if (form.bike === 'bmw1250gs') upgrade = parsePrice(dep.bike_upgrade_bmw1250gs);
+    var pillion = (form.addPillion === 'Yes') ? parsePrice(dep.pillion) : 0;
+    var shared = (form.roomType !== 'Single') ? parsePrice(dep.shared_room_discount) : 0;
     return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
   }
 
