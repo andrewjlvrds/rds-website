@@ -107,16 +107,16 @@
   var form = {
     firstName:'', lastName:'', email:'', phone:'', country:'',
     tourCategory:'', tourVariant:'', departureDate:'', customDescription:'',
-    sharedRoomName:'', addPillion:'', bike:'',
+    roomType:'Single', roommateName:'', addPillion:'', bike:'',
     yearsRiding:'', bikeExperience:'', previousTours:'',
     onroad:'', offroad:'',
-    licence:false, seatHeight:'',
+    licence:false,
     medical:'', anythingElse:'', referral:'', terms:false
   };
 
   var TOUR_CATEGORIES = [
-    {v:'feast', l:'Feast of Southern Africa: Cape Town to Victoria Falls'},
-    {v:'edge', l:'Edge of Africa: Cape Town to the Kruger Park'},
+    {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls (16 & 21 days)'},
+    {v:'edge', l:'Edge of Africa: Cape Town to and from the Kruger Park (12 & 14 days)'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
     {v:'custom', l:'Custom Tour'}
   ];
@@ -156,8 +156,17 @@
   }
   function fmtDate(s) {
     if (!s) return '';
-    var d = new Date(s + 'T00:00:00');
     var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d;
+    if (s.indexOf('/') !== -1) {
+      // DD/MM/YYYY or D/M/YYYY from Google Sheets
+      var parts = s.split('/');
+      d = new Date(parseInt(parts[2],10), parseInt(parts[1],10)-1, parseInt(parts[0],10));
+    } else {
+      // YYYY-MM-DD fallback
+      d = new Date(s + 'T00:00:00');
+    }
+    if (isNaN(d.getTime())) return s;
     return d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
   }
 
@@ -181,7 +190,7 @@
     if (form.bike === 'crf1100' && dep.bike_upgrade_crf1100) upgrade = Number(dep.bike_upgrade_crf1100) || 0;
     if (form.bike === 'bmw1250gs' && dep.bike_upgrade_bmw1250gs) upgrade = Number(dep.bike_upgrade_bmw1250gs) || 0;
     var pillion = (form.addPillion === 'Yes' && dep.pillion) ? (Number(dep.pillion) || 0) : 0;
-    var shared = (form.sharedRoomName.trim() && dep.shared_room_discount) ? (Number(dep.shared_room_discount) || 0) : 0;
+    var shared = (form.roomType !== 'Single' && dep.shared_room_discount) ? (Number(dep.shared_room_discount) || 0) : 0;
     return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
   }
 
@@ -335,9 +344,14 @@
       h += textareaHtml('customDescription','What are you interested in?',true,form.customDescription,'e.g. Cape Peninsula, Winelands, West Coast \u2014 or tell us what you\u2019re after');
     }
 
-    // Shared room, pillion, bike, pricing — only for full tours
+    // Room, pillion, bike, pricing — only for full tours
     if (isFull) {
-      h += inputHtml('sharedRoomName','Sharing a room with someone? Enter their name',false,'text',form.sharedRoomName,'Leave blank for your own room');
+      h += radioGroupHtml('roomType','Room Type',true,['Single','Shared Twin','Shared Double'],form.roomType);
+
+      if (form.roomType === 'Shared Twin' || form.roomType === 'Shared Double') {
+        h += inputHtml('roommateName','Name of the person you\u2019re sharing with',true,'text',form.roommateName,'Their full name');
+      }
+
       h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
 
       // Motorcycle preference
@@ -354,10 +368,13 @@
         h += '<span class="radio-text">' + BIKES_STD[i].l + '</span></div>';
       }
 
-      if (dep && (dep.bike_upgrade_crf1100 || dep.bike_upgrade_bmw1250gs)) {
+      // Upgrades — show based on tour variant, not just selected departure
+      var upgradeSource = dep;
+      if (!upgradeSource && deps.length > 0) upgradeSource = deps[0]; // use first departure for upgrade prices
+      if (upgradeSource && (upgradeSource.bike_upgrade_crf1100 || upgradeSource.bike_upgrade_bmw1250gs)) {
         h += '<div class="bike-section bike-divider">Upgrades</div>';
         for (var i = 0; i < BIKES_UP.length; i++) {
-          var amt = dep ? Number(dep[BIKES_UP[i].k]) || 0 : 0;
+          var amt = Number(upgradeSource[BIKES_UP[i].k]) || 0;
           if (!amt) continue;
           var on = form.bike === BIKES_UP[i].v ? ' on' : '';
           h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_UP[i].v + '">';
@@ -367,11 +384,6 @@
         }
       }
 
-      h += '<div class="bike-section bike-divider">Other</div>';
-      var ownOn = form.bike === 'own' ? ' on' : '';
-      h += '<div class="radio-item' + ownOn + '" data-radio="bike" data-val="own">';
-      h += '<div class="radio-dot' + ownOn + '"><div class="radio-dot-inner"></div></div>';
-      h += '<span class="radio-text">Own Bike</span></div>';
       h += '</div></div>';
 
       // Pricing card
@@ -414,10 +426,8 @@
     h += '<span class="check-text">I have a licence to ride a motorcycle over 125cc <span class="req">*</span></span>';
     h += '</div></div>';
 
-    h += radioGroupHtml('seatHeight','Our bikes have seat heights from 750\u2013850mm (29.5\u201333.5in). Is that suitable?',true,['Yes','No, I need something lower'],form.seatHeight);
-
-    h += textareaHtml('medical','Physical limitations or medical conditions we should know about?',false,form.medical,'Optional');
-    h += textareaHtml('anythingElse','Anything else you\u2019d like us to know about your riding background?',false,form.anythingElse,'Optional');
+    h += textareaHtml('medical','Any physical limitations or medical conditions we should know about?',false,form.medical,'Optional');
+    h += textareaHtml('anythingElse','Anything else you\u2019d like us to know?',false,form.anythingElse,'Optional');
 
     // Attribution
     h += '<div style="border-top:1px solid #1e2530;margin-top:28px;padding-top:24px">';
@@ -455,12 +465,14 @@
       h += '<div class="sum-row"><span class="sum-lbl">Departure</span><span>' + fmtDate(form.departureDate) + '</span></div>';
     }
     if (isFull && form.bike) {
-      var allBikes = BIKES_STD.concat(BIKES_UP).concat([{v:'own',l:'Own Bike'}]);
+      var allBikes = BIKES_STD.concat(BIKES_UP);
       var bikeName = form.bike;
       for (var i = 0; i < allBikes.length; i++) { if (allBikes[i].v === form.bike) { bikeName = allBikes[i].l; break; } }
       h += '<div class="sum-row"><span class="sum-lbl">Motorcycle</span><span>' + escHtml(bikeName) + '</span></div>';
     }
-    if (isFull && form.sharedRoomName.trim()) h += '<div class="sum-row"><span class="sum-lbl">Sharing with</span><span>' + escHtml(form.sharedRoomName) + '</span></div>';
+    if (isFull && form.roomType !== 'Single') {
+      h += '<div class="sum-row"><span class="sum-lbl">Room</span><span>' + escHtml(form.roomType) + ' with ' + escHtml(form.roommateName) + '</span></div>';
+    }
     if (isFull && form.addPillion === 'Yes') h += '<div class="sum-row"><span class="sum-lbl">Pillion</span><span>Yes</span></div>';
     if (isFull && dep) {
       var p = getPricing();
@@ -494,6 +506,7 @@
         if (!form.departureDate) e.push('departureDate');
         if (!form.addPillion) e.push('addPillion');
         if (!form.bike) e.push('bike');
+        if (form.roomType !== 'Single' && !form.roommateName.trim()) e.push('roommateName');
       }
       if ((form.tourCategory === 'custom' || form.tourCategory === 'oneday') && !form.customDescription.trim()) e.push('customDescription');
     }
@@ -504,7 +517,6 @@
       if (!form.onroad) e.push('onroad');
       if (!form.offroad) e.push('offroad');
       if (!form.licence) e.push('licence');
-      if (!form.seatHeight) e.push('seatHeight');
       if (!form.referral) e.push('referral');
       if (!form.terms) e.push('terms');
     }
@@ -514,7 +526,7 @@
   // ── Event binding ──
   function bindEvents() {
     // Read form values from DOM
-    var fields = ['firstName','lastName','email','phone','country','tourCategory','departureDate','sharedRoomName','customDescription','yearsRiding','bikeExperience','previousTours','medical','anythingElse','referral'];
+    var fields = ['firstName','lastName','email','phone','country','tourCategory','departureDate','roommateName','customDescription','yearsRiding','bikeExperience','previousTours','medical','anythingElse','referral'];
     for (var i = 0; i < fields.length; i++) {
       (function(field) {
         var el = document.getElementById(field);
@@ -538,7 +550,7 @@
               render();
             }
             if (field === 'departureDate') render();
-            if (field === 'sharedRoomName') render();
+            if (field === 'roommateName') render();
           });
         }
       })(fields[i]);
@@ -632,11 +644,12 @@
       departureDate: form.departureDate,
       tourEndDate: dep ? dep.tour_end_date : '',
       customDescription: form.customDescription,
-      sharedRoomName: form.sharedRoomName, addPillion: form.addPillion, bike: form.bike,
+      roomType: form.roomType,
+      sharedRoomName: form.roommateName, addPillion: form.addPillion, bike: form.bike,
       basePrice: p.base, upgradeAmount: p.upgrade, pillionAmount: p.pillion, sharedRoomDiscount: p.shared,
       yearsRiding: form.yearsRiding, bikeExperience: form.bikeExperience,
       previousTours: form.previousTours, onroad: form.onroad, offroad: form.offroad,
-      licence: form.licence, seatHeight: form.seatHeight,
+      licence: form.licence,
       medical: form.medical, anythingElse: form.anythingElse,
       referral: form.referral, terms: form.terms
     };
