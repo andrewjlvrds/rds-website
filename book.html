@@ -286,7 +286,7 @@
     html += '</div>';
 
     // Footer
-    html += '<div class="footer">Questions? Email <a href="mailto:andrew@ridedownsouth.com">andrew@ridedownsouth.com</a></div>';
+    html += '<div class="footer">Questions? Email <a href="mailto:ride@ridedownsouth.com">ride@ridedownsouth.com</a> or call <a href="tel:+27796977110" style="color:#D97B2B;text-decoration:none">+27 79 697 7110</a></div>';
 
     app.innerHTML = html;
     bindEvents();
@@ -533,6 +533,10 @@
     if (isFull && dep) {
       var p = getPricing();
       h += '<div class="sum-row" style="border-top:1px solid #252525;padding-top:10px;margin-top:6px"><span style="color:#999;font-weight:600">Total</span><span style="color:#D97B2B;font-weight:700">' + fmt(p.total) + '</span></div>';
+      var localSum = fmtLocal(p.total);
+      if (localSum) {
+        h += '<div style="text-align:right;font-size:12px;color:#999;margin-top:2px;font-style:italic">' + localSum + '</div>';
+      }
     }
     if (!isFull && form.customDescription.trim()) {
       h += '<div class="sum-row"><span class="sum-lbl">Details</span><span>' + escHtml(form.customDescription.substring(0,80)) + (form.customDescription.length > 80 ? '...' : '') + '</span></div>';
@@ -666,7 +670,7 @@
     if (btn) btn.addEventListener('click', function() {
       var errs = validate(3);
       if (errs.length) {
-        document.getElementById('submitError').innerHTML = '<p class="err-txt">Please complete all required fields, including licence confirmation and T&Cs.</p>';
+        document.getElementById('submitError').innerHTML = '<p class="err-txt">Please complete all required fields.</p>';
         return;
       }
       submitBooking();
@@ -721,12 +725,12 @@
         showSuccess();
       } else {
         if (btn) { btn.disabled = false; btn.textContent = 'Send'; }
-        document.getElementById('submitError').innerHTML = '<p class="err-txt">' + (result.error || 'Something went wrong. Please email andrew@ridedownsouth.com') + '</p>';
+        document.getElementById('submitError').innerHTML = '<p class="err-txt">' + (result.error || 'Something went wrong. Please email ride@ridedownsouth.com') + '</p>';
       }
     })
     .catch(function() {
       if (btn) { btn.disabled = false; btn.textContent = 'Send'; }
-      document.getElementById('submitError').innerHTML = '<p class="err-txt">Connection error. Please email andrew@ridedownsouth.com</p>';
+      document.getElementById('submitError').innerHTML = '<p class="err-txt">Connection error. Please email ride@ridedownsouth.com</p>';
     });
   }
 
@@ -743,7 +747,7 @@
     h += '<h2 style="margin-top:22px;font-size:21px;color:#e8e8e8">Thanks for booking your tour!</h2>';
     h += '<p style="color:#999;font-size:14px;line-height:1.7;max-width:400px;margin:14px auto 0">We\u2019ll be in touch with more details right away. Keep an eye on your inbox.</p>';
     h += '</div>';
-    h += '<div class="footer">Questions? Email <a href="mailto:andrew@ridedownsouth.com">andrew@ridedownsouth.com</a></div>';
+    h += '<div class="footer">Questions? Email <a href="mailto:ride@ridedownsouth.com">ride@ridedownsouth.com</a> or call <a href="tel:+27796977110" style="color:#D97B2B;text-decoration:none">+27 79 697 7110</a></div>';
     app.innerHTML = h;
   }
 
