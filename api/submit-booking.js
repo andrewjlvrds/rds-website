@@ -4,6 +4,16 @@ var zohoSearch = zoho.zohoSearch;
 var ZOHO_API = zoho.ZOHO_API;
 var corsHeaders = zoho.corsHeaders;
 
+// Convert DD/MM/YYYY or D/M/YYYY to YYYY-MM-DD for Zoho
+function toZohoDate(s) {
+  if (!s) return null;
+  if (s.indexOf("/") !== -1) {
+    var parts = s.split("/");
+    return parts[2] + "-" + parts[1].padStart(2, "0") + "-" + parts[0].padStart(2, "0");
+  }
+  return s; // already YYYY-MM-DD
+}
+
 // Tour type mapping: form tour name → Zoho Tour_Type pick list value
 var TOUR_TYPE_MAP = {
   "Feast of Southern Africa: 21 days": "FoSA 21",
@@ -48,12 +58,20 @@ module.exports = async function handler(req, res) {
     var token = await getZohoToken();
 
     // ── 1. Search Tours module for matching tour record ──
-    var tourType = TOUR_TYPE_MAP[body.tour] || "";
+    // Map tour variant to Zoho Tour_Type
+    var VARIANT_TYPE_MAP = {
+      "feast-21": "FoSA 21",
+      "feast-16": "FoSA 16",
+      "feast-15": "FoSA 15",
+      "feast-20": "FoSA 20",
+      "edge-14": "Edge 14",
+      "edge-12": "Edge 12"
+    };
+    var tourType = VARIANT_TYPE_MAP[body.tourVariant] || TOUR_TYPE_MAP[body.tour] || "";
     var tourRecordId = null;
 
     if (tourType && body.departureDate) {
-      // Departure date comes as "2027-03-20" from the form
-      var depDate = body.departureDate; // already YYYY-MM-DD
+      var depDate = toZohoDate(body.departureDate);
       try {
         var tourSearch = await zohoSearch(
           token,
@@ -79,7 +97,8 @@ module.exports = async function handler(req, res) {
     var bookingName = (body.firstName || "").trim() + " " + (body.lastName || "").trim();
     // Add tour short code and date to make it unique
     var shortTour = tourType || body.tour.substring(0, 10);
-    var shortDate = body.departureDate.substring(5, 7) + "/" + body.departureDate.substring(2, 4);
+    var zohoDate = toZohoDate(body.departureDate) || "";
+    var shortDate = zohoDate.substring(5, 7) + "/" + zohoDate.substring(2, 4);
     bookingName = bookingName + " - " + shortTour + " " + shortDate;
 
     var record = {
@@ -94,8 +113,8 @@ module.exports = async function handler(req, res) {
       Which_Tour: body.tour || "",
       Tour_Name: body.tour || "",
       Departure_Dates: body.departureDate || "",
-      Tour_start_date: body.departureDate || null,
-      Tour_end_date: body.tourEndDate || null,
+      Tour_start_date: toZohoDate(body.departureDate),
+      Tour_end_date: toZohoDate(body.tourEndDate),
 
       // Room
       Are_you_sharing_a_room: hasRoommate ? "Yes" : "No",
