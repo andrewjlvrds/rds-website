@@ -131,7 +131,6 @@ module.exports = async function handler(req, res) {
 
       // Pricing
       Tour_Price: parseFloat(body.basePrice) || 0,
-      Bike_Upgrade_Amount: parseFloat(body.upgradeAmount) || 0,
       Shared_Room_Discount: parseFloat(body.sharedRoomDiscount) || 0,
       Bike_Upgrade_Notes: isUpgradeCRF ? "CRF1100" : (isUpgradeBMW ? "BMW 1250GS" : ""),
       Pillion1: parseFloat(body.pillionAmount) || 0,
