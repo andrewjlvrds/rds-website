@@ -119,6 +119,7 @@ module.exports = async function handler(req, res) {
       // Room
       Are_you_sharing_a_room: hasRoommate ? "Yes" : "No",
       Roommate_Name: hasRoommate ? body.sharedRoomName.trim() : "",
+      Room_Preference_2: body.roomType || "Single",
 
       // Pillion
       Pillion: hasPillion ? "Yes" : "No",
@@ -132,6 +133,7 @@ module.exports = async function handler(req, res) {
       Tour_Price: parseFloat(body.basePrice) || 0,
       Bike_Upgrade_Amount: parseFloat(body.upgradeAmount) || 0,
       Shared_Room_Discount: parseFloat(body.sharedRoomDiscount) || 0,
+      Bike_Upgrade_Notes: isUpgradeCRF ? "CRF1100" : (isUpgradeBMW ? "BMW 1250GS" : ""),
       Pillion1: parseFloat(body.pillionAmount) || 0,
 
       // Riding experience
@@ -141,7 +143,6 @@ module.exports = async function handler(req, res) {
       Tar_Roads_Experience: body.onroad || "",
       Gravel_Roads_Experience: body.offroad || "",
       Do_you_have_a_bike_licence: body.licence ? "Yes" : "No",
-      Seat_height_ok: body.seatHeight || "",
       Any_physical_or_medical_limitations: body.medical || "",
       Anything_else_we_should_know: body.anythingElse || "",
 
@@ -150,6 +151,10 @@ module.exports = async function handler(req, res) {
 
       // T&Cs
       Waiver_Signed: body.terms === true,
+      T_s_and_C_s_checked: body.terms ? "Yes" : "No",
+
+      // Participant type
+      Participant_Type: hasPillion ? "Rider + Pillion" : "Rider",
 
       // Auto-set
       Booking_Date: new Date().toISOString().split("T")[0],
