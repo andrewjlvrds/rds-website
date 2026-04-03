@@ -241,7 +241,7 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error("Submit booking error:", err.message, err.stack);
     return res.status(500).json({
-      error: "Something went wrong. Please email andrew@ridedownsouth.com",
+      error: "Something went wrong. Please email ride@ridedownsouth.com",
       detail: err.message,
     });
   }
