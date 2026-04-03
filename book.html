@@ -540,7 +540,7 @@
     h += '</div>';
 
     h += '<div id="submitError"></div>';
-    h += '<div class="btns"><button class="btn-s" id="btnBack3">Back</button><button class="btn-p" id="btnSubmit">Request My Booking</button></div>';
+    h += '<div class="btns"><button class="btn-s" id="btnBack3">Back</button><button class="btn-p" id="btnSubmit">Send</button></div>';
     return h;
   }
 
@@ -720,12 +720,12 @@
       if (result.success) {
         showSuccess();
       } else {
-        if (btn) { btn.disabled = false; btn.textContent = 'Request My Booking'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Send'; }
         document.getElementById('submitError').innerHTML = '<p class="err-txt">' + (result.error || 'Something went wrong. Please email andrew@ridedownsouth.com') + '</p>';
       }
     })
     .catch(function() {
-      if (btn) { btn.disabled = false; btn.textContent = 'Request My Booking'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Send'; }
       document.getElementById('submitError').innerHTML = '<p class="err-txt">Connection error. Please email andrew@ridedownsouth.com</p>';
     });
   }
