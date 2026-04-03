@@ -73,13 +73,13 @@ module.exports = async function handler(req, res) {
     if (tourType && body.departureDate) {
       var depDate = toZohoDate(body.departureDate);
       try {
-        var tourSearch = await zohoSearch(
+        var tourSearchResp = await zohoSearch(
           token,
           "Tours",
           "((Tour_Type:equals:" + tourType + ") and (Departure_Date:equals:" + depDate + "))"
         );
-        if (tourSearch.data && tourSearch.data.length > 0) {
-          tourRecordId = tourSearch.data[0].id;
+        if (tourSearchResp && tourSearchResp.data && tourSearchResp.data.length > 0) {
+          tourRecordId = tourSearchResp.data[0].id;
         }
       } catch (e) {
         console.error("Tour search failed:", e.message);
@@ -99,7 +99,8 @@ module.exports = async function handler(req, res) {
     var shortTour = tourType || body.tour.substring(0, 10);
     var zohoDate = toZohoDate(body.departureDate) || "";
     var shortDate = zohoDate.substring(5, 7) + "/" + zohoDate.substring(2, 4);
-    bookingName = bookingName + " - " + shortTour + " " + shortDate;
+    var ts = Date.now().toString(36);
+    bookingName = bookingName + " - " + shortTour + " " + shortDate + " " + ts;
 
     var record = {
       Name: bookingName,
