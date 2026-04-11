@@ -1,5 +1,5 @@
 <script>
-(function () {
+function rdsInjectPrices() {
   var PRICES_URL = 'https://rds-website-orcin.vercel.app/api/tour-prices';
   var AVAIL_URL = 'https://rds-website-orcin.vercel.app/api/tour-availability';
 
@@ -150,5 +150,11 @@
     };
     xhr2.send();
   }
-})();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', rdsInjectPrices);
+} else {
+  rdsInjectPrices();
+}
 </script>
