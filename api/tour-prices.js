@@ -5,7 +5,7 @@ var SHEET_NAME = 'Tour_List';
 var cache = {
   data: null,
   timestamp: 0,
-  TTL: 60 * 60 * 1000 // 1 hour
+  TTL: 60 * 60 * 1000 // 1 hour — cache bust 1775907410
 };
 
 module.exports = function handler(req, res) {
@@ -119,4 +119,5 @@ module.exports = function handler(req, res) {
       });
     });
 };
+
 
