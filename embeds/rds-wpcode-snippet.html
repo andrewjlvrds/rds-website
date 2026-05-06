@@ -95,6 +95,9 @@ function rdsInjectPrices() {
           var div = dateDivs[i];
           var tourId = div.getAttribute('data-tour');
           var label = div.getAttribute('data-label') || '';
+          var limit = parseInt(div.getAttribute('data-limit') || '0', 10); // 0 = no limit
+          var linkUrl = div.getAttribute('data-link') || '';
+          var linkText = div.getAttribute('data-link-text') || 'See all dates & prices';
           var lines = [];
 
           for (var j = 0; j < departures.length; j++) {
@@ -113,13 +116,23 @@ function rdsInjectPrices() {
             lines.push(range);
           }
 
+          // Apply limit
+          var showAll = (limit <= 0 || lines.length <= limit);
+          var visibleLines = showAll ? lines : lines.slice(0, limit);
+
           var html = '';
           if (label) html += '<strong>' + label + '</strong><br>';
-          if (lines.length > 0) {
-            html += lines.join('<br>');
+          if (visibleLines.length > 0) {
+            html += visibleLines.join('<br>');
           } else {
             html += 'No upcoming dates \u2014 <a href="/contact-us/">contact us</a> for availability.';
           }
+
+          // "See all dates" link if limited and there are more, or always if data-link set
+          if (linkUrl && (!showAll || (lines.length > 0 && limit > 0))) {
+            html += '<br><a href="' + linkUrl + '" style="color:#e87c1e;font-weight:600;">' + linkText + '</a>';
+          }
+
           div.innerHTML = html;
         }
 
