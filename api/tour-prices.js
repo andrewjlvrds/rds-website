@@ -1,6 +1,5 @@
 // api/tour-prices.js
 // Reads pricing from Zoho Tours module (source of truth since May 2026).
-// Replaces the previous Google Sheets implementation.
 
 var zoho = require('./_zoho');
 
@@ -33,7 +32,7 @@ var FETCH_FIELDS = 'Tour_Type,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_
 var cache = {
   data: null,
   timestamp: 0,
-  TTL: 60 * 60 * 1000 // 1 hour
+  TTL: 60 * 60 * 1000
 };
 
 module.exports = async function handler(req, res) {
@@ -54,7 +53,6 @@ module.exports = async function handler(req, res) {
   try {
     var token = await zoho.getZohoToken();
 
-    // Fetch all tours paginated
     var allTours = [];
     var page = 1;
     var more = true;
@@ -67,22 +65,31 @@ module.exports = async function handler(req, res) {
       page++;
     }
 
-    // Deduplicate by Tour_Type — pick first record with non-zero pricing
-    var seen = {};
-    var tours = {};
+    // For each Tour_Type, keep the record with the highest Price_Rider.
+    // This ensures we get the correctly-priced record even if older records
+    // have stale or zero pricing.
+    var bestByType = {};
 
     for (var i = 0; i < allTours.length; i++) {
       var t = allTours[i];
       var tourType = t.Tour_Type;
-      if (!tourType || seen[tourType]) continue;
-
-      var tourId = TOUR_TYPE_TO_ID[tourType];
-      if (!tourId) continue;
+      if (!tourType) continue;
+      if (!TOUR_TYPE_TO_ID[tourType]) continue;
 
       var priceRider = parseFloat(t.Price_Rider || 0);
-      if (!priceRider) continue; // skip tours with no pricing set yet
+      var existing = bestByType[tourType];
+      if (!existing || priceRider > parseFloat(existing.Price_Rider || 0)) {
+        bestByType[tourType] = t;
+      }
+    }
 
-      seen[tourType] = true;
+    var tours = {};
+    Object.keys(bestByType).forEach(function(tourType) {
+      var t = bestByType[tourType];
+      var tourId = TOUR_TYPE_TO_ID[tourType];
+      var priceRider = parseFloat(t.Price_Rider || 0);
+      if (!priceRider) return; // skip tour types with no pricing at all
+
       tours[tourId] = {
         tour_id:                tourId,
         tour_name:              TOUR_NAMES[tourId] || tourType,
@@ -93,7 +100,7 @@ module.exports = async function handler(req, res) {
         bike_upgrade_bmw1250gs: String(Math.round(parseFloat(t.Upgrade_BMW || 0))),
         bike_upgrade_transalp:  String(Math.round(parseFloat(t.Upgrade_Transalp || 0))),
       };
-    }
+    });
 
     var data = {
       updated: new Date().toISOString(),
