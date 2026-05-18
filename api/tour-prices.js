@@ -32,7 +32,7 @@ var FETCH_FIELDS = 'Tour_Type,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_
 var cache = {
   data: null,
   timestamp: 0,
-  TTL: 60 * 60 * 1000 // cache bust 1779093440
+  TTL: 60 * 60 * 1000
 };
 
 module.exports = async function handler(req, res) {
@@ -43,8 +43,11 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
+  // ?debug=1 bypasses cache and returns raw Zoho data for diagnosis
+  var debug = req.query && req.query.debug === '1';
+
   var now = Date.now();
-  if (cache.data && (now - cache.timestamp) < cache.TTL) {
+  if (!debug && cache.data && (now - cache.timestamp) < cache.TTL) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
     res.setHeader('X-Cache', 'HIT');
     return res.status(200).json(cache.data);
@@ -65,17 +68,21 @@ module.exports = async function handler(req, res) {
       page++;
     }
 
-    // For each Tour_Type, keep the record with the highest Price_Rider.
-    // This ensures we get the correctly-priced record even if older records
-    // have stale or zero pricing.
-    var bestByType = {};
+    // In debug mode return raw Zoho records so we can inspect field names
+    if (debug) {
+      return res.status(200).json({
+        total: allTours.length,
+        sample: allTours.slice(0, 5),
+        allTourTypes: allTours.map(function(t) { return { type: t.Tour_Type, price: t.Price_Rider }; })
+      });
+    }
 
+    var bestByType = {};
     for (var i = 0; i < allTours.length; i++) {
       var t = allTours[i];
       var tourType = t.Tour_Type;
       if (!tourType) continue;
       if (!TOUR_TYPE_TO_ID[tourType]) continue;
-
       var priceRider = parseFloat(t.Price_Rider || 0);
       var existing = bestByType[tourType];
       if (!existing || priceRider > parseFloat(existing.Price_Rider || 0)) {
@@ -88,7 +95,7 @@ module.exports = async function handler(req, res) {
       var t = bestByType[tourType];
       var tourId = TOUR_TYPE_TO_ID[tourType];
       var priceRider = parseFloat(t.Price_Rider || 0);
-      if (!priceRider) return; // skip tour types with no pricing at all
+      if (!priceRider) return;
 
       tours[tourId] = {
         tour_id:                tourId,
