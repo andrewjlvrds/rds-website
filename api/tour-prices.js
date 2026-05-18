@@ -1,11 +1,9 @@
 // api/tour-prices.js
 // Reads pricing from Zoho Tours module (source of truth since May 2026).
 // Replaces the previous Google Sheets implementation.
-// Pricing is managed in RDS Dash → pushed to Zoho via tour-push-prices.
 
 var zoho = require('./_zoho');
 
-// Map Zoho Tour_Type values → website tour_id keys
 var TOUR_TYPE_TO_ID = {
   'FoSA 20': 'feast-20',
   'FoSA 21': 'feast-21',
@@ -18,34 +16,24 @@ var TOUR_TYPE_TO_ID = {
   'GL 14':    'greatlakes-14',
 };
 
-// Human-readable names for each tour_id
 var TOUR_NAMES = {
-  'feast-20':     'Feast of Southern Africa: 20 days',
-  'feast-21':     'Feast of Southern Africa: 21 days',
-  'feast-15':     'Feast of Southern Africa: 15 days',
-  'edge-14':      'Edge of Africa: 14 days',
-  'edge-12':      'Edge of Africa: 12 days',
-  'edge-21':      'Edge of Africa: 21 days',
-  'bon-13':       'Best of Namibia: 13 days',
-  'greatlakes-24':'Great Lakes & Rift Valley: 24 days',
-  'greatlakes-14':'Great Lakes & Rift Valley: 14 days',
+  'feast-20':      'Feast of Southern Africa: 20 days',
+  'feast-21':      'Feast of Southern Africa: 21 days',
+  'feast-15':      'Feast of Southern Africa: 15 days',
+  'edge-14':       'Edge of Africa: 14 days',
+  'edge-12':       'Edge of Africa: 12 days',
+  'edge-21':       'Edge of Africa: 21 days',
+  'bon-13':        'Best of Namibia: 13 days',
+  'greatlakes-24': 'Great Lakes & Rift Valley: 24 days',
+  'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
 };
 
-var FETCH_FIELDS = [
-  'Tour_Type',
-  'Price_Rider',
-  'Price_Pillion',
-  'Upgrade_CRF1100',
-  'Upgrade_BMW',
-  'Upgrade_Transalp',
-  'Shared_Room_Discount',
-].join(',');
+var FETCH_FIELDS = 'Tour_Type,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_BMW,Upgrade_Transalp,Shared_Room_Discount';
 
-// In-memory cache — 1 hour TTL (pricing changes infrequently)
 var cache = {
   data: null,
   timestamp: 0,
-  TTL: 60 * 60 * 1000
+  TTL: 60 * 60 * 1000 // 1 hour
 };
 
 module.exports = async function handler(req, res) {
@@ -64,44 +52,44 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Fetch all tours from Zoho, paginated
+    var token = await zoho.getZohoToken();
+
+    // Fetch all tours paginated
     var allTours = [];
     var page = 1;
     var more = true;
     while (more && page <= 5) {
-      var result = await zoho.zohoApi('GET',
-        'Tours?fields=' + FETCH_FIELDS + '&per_page=200&page=' + page
+      var result = await zoho.zohoFetch(token,
+        '/Tours?fields=' + FETCH_FIELDS + '&per_page=200&page=' + page
       );
       if (result && result.data) allTours = allTours.concat(result.data);
       more = result && result.info && result.info.more_records;
       page++;
     }
 
-    // Deduplicate by Tour_Type — pricing is the same across all departures
-    // Take the first non-zero price found for each type
+    // Deduplicate by Tour_Type — pick first record with non-zero pricing
     var seen = {};
     var tours = {};
 
     for (var i = 0; i < allTours.length; i++) {
       var t = allTours[i];
       var tourType = t.Tour_Type;
-      if (!tourType) continue;
-      if (seen[tourType]) continue;
+      if (!tourType || seen[tourType]) continue;
 
       var tourId = TOUR_TYPE_TO_ID[tourType];
       if (!tourId) continue;
 
       var priceRider = parseFloat(t.Price_Rider || 0);
-      if (!priceRider) continue; // skip tours with no pricing set
+      if (!priceRider) continue; // skip tours with no pricing set yet
 
       seen[tourType] = true;
       tours[tourId] = {
-        tour_id:              tourId,
-        tour_name:            TOUR_NAMES[tourId] || tourType,
-        base_price:           String(Math.round(priceRider)),
-        pillion:              String(Math.round(parseFloat(t.Price_Pillion || 0))),
-        shared_room_discount: String(Math.round(parseFloat(t.Shared_Room_Discount || 0))),
-        bike_upgrade_crf1100: String(Math.round(parseFloat(t.Upgrade_CRF1100 || 0))),
+        tour_id:                tourId,
+        tour_name:              TOUR_NAMES[tourId] || tourType,
+        base_price:             String(Math.round(priceRider)),
+        pillion:                String(Math.round(parseFloat(t.Price_Pillion || 0))),
+        shared_room_discount:   String(Math.round(parseFloat(t.Shared_Room_Discount || 0))),
+        bike_upgrade_crf1100:   String(Math.round(parseFloat(t.Upgrade_CRF1100 || 0))),
         bike_upgrade_bmw1250gs: String(Math.round(parseFloat(t.Upgrade_BMW || 0))),
         bike_upgrade_transalp:  String(Math.round(parseFloat(t.Upgrade_Transalp || 0))),
       };
@@ -122,9 +110,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('[tour-prices] error:', err.message);
-    return res.status(500).json({
-      error: 'Unable to load tour pricing data',
-      detail: err.message
-    });
+    return res.status(500).json({ error: 'Unable to load tour pricing data', detail: err.message });
   }
 };
