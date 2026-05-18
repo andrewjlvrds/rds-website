@@ -32,7 +32,7 @@ var FETCH_FIELDS = 'Tour_Type,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_
 var cache = {
   data: null,
   timestamp: 0,
-  TTL: 60 * 60 * 1000
+  TTL: 60 * 60 * 1000 // cache bust 1779093440
 };
 
 module.exports = async function handler(req, res) {
