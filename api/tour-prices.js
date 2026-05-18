@@ -1,123 +1,130 @@
-var SPREADSHEET_ID = '1LcmK8TPLT32XJL6APJQPjR5JLSKmxuBsLVuDHgfAckQ';
-var SHEET_NAME = 'Tour_List';
+// api/tour-prices.js
+// Reads pricing from Zoho Tours module (source of truth since May 2026).
+// Replaces the previous Google Sheets implementation.
+// Pricing is managed in RDS Dash → pushed to Zoho via tour-push-prices.
 
-// In-memory cache
+var zoho = require('./_zoho');
+
+// Map Zoho Tour_Type values → website tour_id keys
+var TOUR_TYPE_TO_ID = {
+  'FoSA 20': 'feast-20',
+  'FoSA 21': 'feast-21',
+  'FoSA 15': 'feast-15',
+  'Edge 14':  'edge-14',
+  'Edge 12':  'edge-12',
+  'Edge 21':  'edge-21',
+  'BoN':      'bon-13',
+  'GL':       'greatlakes-24',
+  'GL 14':    'greatlakes-14',
+};
+
+// Human-readable names for each tour_id
+var TOUR_NAMES = {
+  'feast-20':     'Feast of Southern Africa: 20 days',
+  'feast-21':     'Feast of Southern Africa: 21 days',
+  'feast-15':     'Feast of Southern Africa: 15 days',
+  'edge-14':      'Edge of Africa: 14 days',
+  'edge-12':      'Edge of Africa: 12 days',
+  'edge-21':      'Edge of Africa: 21 days',
+  'bon-13':       'Best of Namibia: 13 days',
+  'greatlakes-24':'Great Lakes & Rift Valley: 24 days',
+  'greatlakes-14':'Great Lakes & Rift Valley: 14 days',
+};
+
+var FETCH_FIELDS = [
+  'Tour_Type',
+  'Price_Rider',
+  'Price_Pillion',
+  'Upgrade_CRF1100',
+  'Upgrade_BMW',
+  'Upgrade_Transalp',
+  'Shared_Room_Discount',
+].join(',');
+
+// In-memory cache — 1 hour TTL (pricing changes infrequently)
 var cache = {
   data: null,
   timestamp: 0,
-  TTL: 60 * 60 * 1000 // 1 hour — cache bust 1775907410
+  TTL: 60 * 60 * 1000
 };
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== 'GET') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
   var now = Date.now();
-
   if (cache.data && (now - cache.timestamp) < cache.TTL) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
     res.setHeader('X-Cache', 'HIT');
-    res.status(200).json(cache.data);
-    return;
+    return res.status(200).json(cache.data);
   }
 
-  var apiKey = process.env.GOOGLE_SHEETS_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'Server configuration error — missing API key' });
-    return;
-  }
+  try {
+    // Fetch all tours from Zoho, paginated
+    var allTours = [];
+    var page = 1;
+    var more = true;
+    while (more && page <= 5) {
+      var result = await zoho.zohoApi('GET',
+        'Tours?fields=' + FETCH_FIELDS + '&per_page=200&page=' + page
+      );
+      if (result && result.data) allTours = allTours.concat(result.data);
+      more = result && result.info && result.info.more_records;
+      page++;
+    }
 
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' +
-    SPREADSHEET_ID +
-    '/values/' + encodeURIComponent(SHEET_NAME) +
-    '?key=' + apiKey;
+    // Deduplicate by Tour_Type — pricing is the same across all departures
+    // Take the first non-zero price found for each type
+    var seen = {};
+    var tours = {};
 
-  fetch(url)
-    .then(function (response) {
-      if (!response.ok) {
-        throw new Error('Google Sheets API returned ' + response.status);
-      }
-      return response.json();
-    })
-    .then(function (sheetsData) {
-      var rows = sheetsData.values;
-      if (!rows || rows.length < 2) {
-        throw new Error('No data found in spreadsheet');
-      }
+    for (var i = 0; i < allTours.length; i++) {
+      var t = allTours[i];
+      var tourType = t.Tour_Type;
+      if (!tourType) continue;
+      if (seen[tourType]) continue;
 
-      // Map column positions by header name (case-insensitive, trimmed)
-      var headerRow = rows[0];
-      var col = {};
-      for (var h = 0; h < headerRow.length; h++) {
-        var key = headerRow[h].toString().trim().toLowerCase()
-          .replace(/[^a-z0-9]/g, '_')
-          .replace(/_+/g, '_')
-          .replace(/^_|_$/g, '');
-        col[key] = h;
-      }
+      var tourId = TOUR_TYPE_TO_ID[tourType];
+      if (!tourId) continue;
 
-      function getVal(row, colName) {
-        var idx = col[colName];
-        if (idx === undefined || idx >= row.length) return '';
-        return (row[idx] || '').toString().trim();
-      }
+      var priceRider = parseFloat(t.Price_Rider || 0);
+      if (!priceRider) continue; // skip tours with no pricing set
 
-      // Deduplicate by tour_id — pricing is the same across all departures
-      var tours = {};
-
-      for (var i = 1; i < rows.length; i++) {
-        var row = rows[i];
-        var tourId = getVal(row, 'tour_id');
-        if (!tourId) continue;
-        if (tours[tourId]) continue;
-
-        // Skip rows without pricing data (e.g. header rows in other sheet sections)
-        var basePrice = getVal(row, 'base_price');
-        if (!basePrice || basePrice === '0') continue;
-
-        tours[tourId] = {
-          tour_id: tourId,
-          tour_name: getVal(row, 'tour_name'),
-          base_price: getVal(row, 'base_price'),
-          pillion: getVal(row, 'pillion'),
-          shared_room_discount: getVal(row, 'shared_room_discount'),
-          bike_upgrade_crf1100: getVal(row, 'bike_upgrade_crf1100'),
-          bike_upgrade_bmw1250gs: getVal(row, 'bike_upgrade_bmw1250gs'),
-          pre_tour_1_day_ride: getVal(row, 'pre_tour_1_day_ride'),
-          extra_night_cape_town: getVal(row, 'extra_night_cape_town_v_v') || getVal(row, 'extra_night_cape_town_v_amp_v')
-        };
-      }
-
-      var result = {
-        updated: new Date().toISOString(),
-        tours: tours
+      seen[tourType] = true;
+      tours[tourId] = {
+        tour_id:              tourId,
+        tour_name:            TOUR_NAMES[tourId] || tourType,
+        base_price:           String(Math.round(priceRider)),
+        pillion:              String(Math.round(parseFloat(t.Price_Pillion || 0))),
+        shared_room_discount: String(Math.round(parseFloat(t.Shared_Room_Discount || 0))),
+        bike_upgrade_crf1100: String(Math.round(parseFloat(t.Upgrade_CRF1100 || 0))),
+        bike_upgrade_bmw1250gs: String(Math.round(parseFloat(t.Upgrade_BMW || 0))),
+        bike_upgrade_transalp:  String(Math.round(parseFloat(t.Upgrade_Transalp || 0))),
       };
+    }
 
-      cache.data = result;
-      cache.timestamp = Date.now();
+    var data = {
+      updated: new Date().toISOString(),
+      source: 'zoho',
+      tours: tours
+    };
 
-      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
-      res.setHeader('X-Cache', 'MISS');
-      res.status(200).json(result);
-    })
-    .catch(function (err) {
-      console.error('Tour prices fetch error:', err.message);
-      res.status(500).json({
-        error: 'Unable to load tour pricing data',
-        detail: err.message
-      });
+    cache.data = data;
+    cache.timestamp = Date.now();
+
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+    res.setHeader('X-Cache', 'MISS');
+    return res.status(200).json(data);
+
+  } catch (err) {
+    console.error('[tour-prices] error:', err.message);
+    return res.status(500).json({
+      error: 'Unable to load tour pricing data',
+      detail: err.message
     });
+  }
 };
-
-
