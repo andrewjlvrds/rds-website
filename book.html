@@ -111,7 +111,7 @@
   var form = {
     firstName:'', lastName:'', email:'', phone:'', country:'',
     tourCategory:'', tourVariant:'', departureDate:'', customDescription:'',
-    roomType:'Single', roommateName:'', addPillion:'', bike:'',
+    participantType:'', roomType:'Single', roommateName:'', addPillion:'', bike:'',
     yearsRiding:'', bikeExperience:'', previousTours:'',
     onroad:'', offroad:'',
     licence:false,
@@ -396,6 +396,11 @@
       }
     }
 
+    // Participant type — shown for all full tours after departure selected
+    if (isFull) {
+      h += radioGroupHtml('participantType','Are you joining as a rider, pillion, or support car passenger?',true,['Rider','Pillion / Passenger','Support Car Passenger'],form.participantType);
+    }
+
     // Custom / 1-day description
     if (form.tourCategory === 'custom') {
       h += textareaHtml('customDescription','Tell us what you have in mind',true,form.customDescription,'Countries, duration, group size, any specific interests...');
@@ -571,6 +576,7 @@
       if (isFull) {
         if (!form.tourVariant) e.push('tourVariant');
         if (!form.departureDate) e.push('departureDate');
+        if (!form.participantType) e.push('participantType');
         if (!form.addPillion) e.push('addPillion');
         if (!form.bike) e.push('bike');
         if (form.roomType !== 'Single' && !form.roommateName.trim()) e.push('roommateName');
@@ -712,6 +718,7 @@
       tourEndDate: dep ? dep.tour_end_date : '',
       customDescription: form.customDescription,
       roomType: form.roomType,
+      participantType: form.participantType,
       sharedRoomName: form.roommateName, addPillion: form.addPillion, bike: form.bike,
       basePrice: p.base, upgradeAmount: p.upgrade, pillionAmount: p.pillion, sharedRoomDiscount: p.shared,
       yearsRiding: form.yearsRiding, bikeExperience: form.bikeExperience,
@@ -770,4 +777,5 @@
 </script>
 </body>
 </html>
+
 
