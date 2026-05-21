@@ -154,8 +154,8 @@ module.exports = async function handler(req, res) {
       Waiver_Signed: body.terms === true,
       T_s_and_C_s_checked: body.terms ? "Yes" : "No",
 
-      // Participant type
-      Participant_Type: hasPillion ? "Rider + Pillion" : "Rider",
+      // Participant type — use form value directly if provided, otherwise infer
+      Participant_Type: body.participantType || (hasPillion ? "Rider + Pillion" : "Rider"),
 
       // Auto-set
       Booking_Date: new Date().toISOString().split("T")[0],
@@ -252,4 +252,5 @@ module.exports = async function handler(req, res) {
     });
   }
 }
+
 
