@@ -121,6 +121,7 @@
   var TOUR_CATEGORIES = [
     {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls (16 & 21 days)'},
     {v:'edge', l:'Edge of Africa: Cape Town to and from the Kruger Park (12 & 14 days)'},
+    {v:'bon', l:'Best of Namibia: 13 days'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
     {v:'custom', l:'Custom Tour'}
   ];
@@ -132,10 +133,13 @@
     edge: [
       {v:'edge-14', l:'14 days \u2014 Cape Town to Kruger Park', default:true},
       {v:'edge-12', l:'12 days \u2014 Kruger Park to Cape Town'}
+    ],
+    bon: [
+      {v:'bon-13', l:'13 days \u2014 Cape Town to Namibia and back', default:true}
     ]
   };
   // Categories that need departure dates, pricing, bike selection
-  var FULL_TOUR = {feast:true, edge:true};
+  var FULL_TOUR = {feast:true, edge:true, bon:true};
 
   var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Republic of Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK and Northern Ireland','USA','Other'];
   var BIKES_STD = [
@@ -766,3 +770,4 @@
 </script>
 </body>
 </html>
+
