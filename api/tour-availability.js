@@ -80,6 +80,7 @@ module.exports = async function handler(req, res) {
     var departures = [];
     var tourNamesSeen = {};
     var tourNamesList = [];
+    var seenDep = {};
 
     for (var i = 0; i < allTours.length; i++) {
       var t = allTours[i];
@@ -95,6 +96,12 @@ module.exports = async function handler(req, res) {
       if (!isAvailable && !isWaitlist) continue;
 
       if (!t.Departure_Date) continue;
+
+      // Skip duplicate departures (same tour + dates) so a stray duplicate in
+      // Zoho can't double up on the website or in the booking form dropdown.
+      var depKey = tourId + '|' + t.Departure_Date + '|' + (t.End_Date || '');
+      if (seenDep[depKey]) continue;
+      seenDep[depKey] = true;
 
       var tourName = TOUR_NAMES[tourId] || tourType;
       if (!tourNamesSeen[tourName]) {
