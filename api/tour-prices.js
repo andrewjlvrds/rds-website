@@ -1,5 +1,8 @@
 // api/tour-prices.js
 // Reads pricing from Zoho Tours module (source of truth since May 2026).
+// "From" price = the nearest UPCOMING departure of each tour type, so the
+// headline figure is always the next thing a guest can actually book.
+// Falls back to the highest-priced departure if no upcoming one has a price yet.
 
 var zoho = require('./_zoho');
 
@@ -27,13 +30,15 @@ var TOUR_NAMES = {
   'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
 };
 
-var FETCH_FIELDS = 'Tour_Type,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_BMW,Upgrade_Transalp,Shared_Room_Discount';
+var FETCH_FIELDS = 'Tour_Type,Departure_Date,Status,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_BMW,Upgrade_Transalp,Shared_Room_Discount';
 
 var cache = {
   data: null,
   timestamp: 0,
   TTL: 60 * 60 * 1000
 };
+
+function riderOf(t) { return parseFloat((t && t.Price_Rider) || 0); }
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -68,50 +73,78 @@ module.exports = async function handler(req, res) {
       page++;
     }
 
-    // In debug mode return raw Zoho records so we can inspect field names
     if (debug) {
       return res.status(200).json({
         total: allTours.length,
         sample: allTours.slice(0, 5),
-        allTourTypes: allTours.map(function(t) { return { type: t.Tour_Type, price: t.Price_Rider }; })
+        allTourTypes: allTours.map(function(t) {
+          return { type: t.Tour_Type, date: t.Departure_Date, status: t.Status, price: t.Price_Rider };
+        })
       });
     }
 
-    var bestByType = {};
+    var todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // For each tour type track: nearest upcoming departure, and highest-priced (fallback)
+    var nearestByType = {};
+    var maxByType = {};
+
     for (var i = 0; i < allTours.length; i++) {
       var t = allTours[i];
       var tourType = t.Tour_Type;
-      if (!tourType) continue;
-      if (!TOUR_TYPE_TO_ID[tourType]) continue;
-      var priceRider = parseFloat(t.Price_Rider || 0);
-      var existing = bestByType[tourType];
-      if (!existing || priceRider > parseFloat(existing.Price_Rider || 0)) {
-        bestByType[tourType] = t;
+      if (!tourType || !TOUR_TYPE_TO_ID[tourType]) continue;
+
+      var status = t.Status || '';
+      if (status === 'Completed' || status === 'Cancelled') continue;
+
+      var dep = (t.Departure_Date || '');
+
+      // Highest-priced fallback
+      if (!maxByType[tourType] || riderOf(t) > riderOf(maxByType[tourType])) {
+        maxByType[tourType] = t;
+      }
+
+      // Nearest upcoming (earliest departure on/after today)
+      if (dep && dep >= todayStr) {
+        var curNear = nearestByType[tourType];
+        if (!curNear || dep < (curNear.Departure_Date || '9999')) {
+          nearestByType[tourType] = t;
+        }
       }
     }
 
     var tours = {};
-    Object.keys(bestByType).forEach(function(tourType) {
-      var t = bestByType[tourType];
+    Object.keys(TOUR_TYPE_TO_ID).forEach(function(tourType) {
       var tourId = TOUR_TYPE_TO_ID[tourType];
-      var priceRider = parseFloat(t.Price_Rider || 0);
+
+      // Prefer nearest upcoming; if it has no price yet, fall back to highest-priced
+      var pick = nearestByType[tourType];
+      if (!pick || riderOf(pick) <= 0) {
+        if (maxByType[tourType] && riderOf(maxByType[tourType]) > 0) pick = maxByType[tourType];
+      }
+      if (!pick) pick = maxByType[tourType] || nearestByType[tourType];
+      if (!pick) return;
+
+      var priceRider = riderOf(pick);
       if (!priceRider) return;
 
       tours[tourId] = {
         tour_id:                tourId,
         tour_name:              TOUR_NAMES[tourId] || tourType,
+        from_date:              pick.Departure_Date || '',
         base_price:             String(Math.round(priceRider)),
-        pillion:                String(Math.round(parseFloat(t.Price_Pillion || 0))),
-        shared_room_discount:   String(Math.round(parseFloat(t.Shared_Room_Discount || 0))),
-        bike_upgrade_crf1100:   String(Math.round(parseFloat(t.Upgrade_CRF1100 || 0))),
-        bike_upgrade_bmw1250gs: String(Math.round(parseFloat(t.Upgrade_BMW || 0))),
-        bike_upgrade_transalp:  String(Math.round(parseFloat(t.Upgrade_Transalp || 0))),
+        pillion:                String(Math.round(parseFloat(pick.Price_Pillion || 0))),
+        shared_room_discount:   String(Math.round(parseFloat(pick.Shared_Room_Discount || 0))),
+        bike_upgrade_crf1100:   String(Math.round(parseFloat(pick.Upgrade_CRF1100 || 0))),
+        bike_upgrade_bmw1250gs: String(Math.round(parseFloat(pick.Upgrade_BMW || 0))),
+        bike_upgrade_transalp:  String(Math.round(parseFloat(pick.Upgrade_Transalp || 0))),
       };
     });
 
     var data = {
       updated: new Date().toISOString(),
       source: 'zoho',
+      basis: 'nearest-upcoming',
       tours: tours
     };
 
