@@ -64,8 +64,11 @@ module.exports = async function handler(req, res) {
       "feast-16": "FoSA 16",
       "feast-15": "FoSA 15",
       "feast-20": "FoSA 20",
+      "edge-21": "Edge 21",
       "edge-14": "Edge 14",
-      "edge-12": "Edge 12"
+      "edge-13": "Edge 13 SWD",
+      "edge-12": "Edge 12",
+      "bon-13": "BoN"
     };
     var tourType = VARIANT_TYPE_MAP[body.tourVariant] || TOUR_TYPE_MAP[body.tour] || "";
     var tourRecordId = null;
@@ -114,6 +117,8 @@ module.exports = async function handler(req, res) {
       // Tour fields
       Which_Tour: body.tour || "",
       Tour_Name: body.tour || "",
+      // Free-text intent from 1-Day / "other tours" / Custom rows (empty for full tours)
+      Booking_Notes: (body.customDescription || "").trim(),
       Departure_Dates: body.departureDate || "",
       Tour_start_date: toZohoDate(body.departureDate),
       Tour_end_date: toZohoDate(body.tourEndDate),

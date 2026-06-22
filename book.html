@@ -120,26 +120,37 @@
 
   var TOUR_CATEGORIES = [
     {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls (16 & 21 days)'},
-    {v:'edge', l:'Edge of Africa: Cape Town to and from the Kruger Park (12 & 14 days)'},
+    {v:'edge21', l:'Edge of Africa (Long Way Up): Cape Town to the Kruger Park (21 days, 2027)'},
+    {v:'edge14', l:'Edge of Africa: 14-day ride from Cape Town to the Kruger Park (Nov-Dec 2026 only)'},
+    {v:'edge13swd', l:'Edge of Africa (Short Way Down): Kruger Park to Cape Town (13 days, 2027)'},
     {v:'bon', l:'Best of Namibia: 13 days'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
+    {v:'other', l:'One of the other tours I\u2019ve seen'},
     {v:'custom', l:'Custom Tour'}
   ];
+  // Variant tour_id values MUST match the tour_id keys emitted by
+  // /api/tour-availability (FoSA 21 -> feast-21, Edge 21/Edge 21 LWU -> edge-21,
+  // Edge 13 SWD -> edge-13, etc.) so live departures resolve.
   var TOUR_VARIANTS = {
     feast: [
-      {v:'feast-21', l:'21 days \u2014 Cape Town to Victoria Falls', default:true},
-      {v:'feast-16', l:'16 days \u2014 Cape Town to Windhoek'}
+      {v:'feast-21', l:'21 days - Cape Town to Victoria Falls', default:true},
+      {v:'feast-16', l:'16 days - Cape Town to Windhoek'}
     ],
-    edge: [
-      {v:'edge-14', l:'14 days \u2014 Cape Town to Kruger Park', default:true},
-      {v:'edge-12', l:'12 days \u2014 Kruger Park to Cape Town'}
+    edge21: [
+      {v:'edge-21', l:'Edge 21 LWU - Cape Town to the Kruger Park', default:true}
+    ],
+    edge14: [
+      {v:'edge-14', l:'14 days - Cape Town to the Kruger Park', default:true}
+    ],
+    edge13swd: [
+      {v:'edge-13', l:'Edge 13 SWD - Kruger Park to Cape Town', default:true}
     ],
     bon: [
-      {v:'bon-13', l:'13 days \u2014 Cape Town to Namibia and back', default:true}
+      {v:'bon-13', l:'13 days - Cape Town to Namibia and back', default:true}
     ]
   };
   // Categories that need departure dates, pricing, bike selection
-  var FULL_TOUR = {feast:true, edge:true, bon:true};
+  var FULL_TOUR = {feast:true, edge21:true, edge14:true, edge13swd:true, bon:true};
 
   var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Republic of Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK and Northern Ireland','USA','Other'];
   var BIKES_STD = [
@@ -366,8 +377,10 @@
     for (var i = 0; i < TOUR_CATEGORIES.length; i++) catOpts.push(TOUR_CATEGORIES[i]);
     h += '<div style="margin-top:20px">' + selectHtml('tourCategory','Which Tour are you interested in?',true,catOpts,form.tourCategory) + '</div>';
 
-    // Tour variant (Feast/Edge only)
-    if (TOUR_VARIANTS[form.tourCategory]) {
+    // Tour variant radio — only when a category offers a real choice (2+ options).
+    // Single-variant categories (the three Edge tours, BoN) auto-select their
+    // variant on category change, so departures resolve without a redundant radio.
+    if (TOUR_VARIANTS[form.tourCategory] && TOUR_VARIANTS[form.tourCategory].length > 1) {
       var variants = TOUR_VARIANTS[form.tourCategory];
       h += '<div style="margin-top:20px">';
       h += radioGroupHtml('tourVariant','Tour option',true,
@@ -407,6 +420,9 @@
     }
     if (form.tourCategory === 'oneday') {
       h += textareaHtml('customDescription','What are you interested in?',true,form.customDescription,'e.g. Cape Peninsula, Winelands, West Coast \u2014 or tell us what you\u2019re after');
+    }
+    if (form.tourCategory === 'other') {
+      h += textareaHtml('customDescription','Which tour did you see, and what would you like to know?',true,form.customDescription,'Tell us which tour caught your eye');
     }
 
     // Room, pillion, bike, pricing — only for full tours
@@ -523,7 +539,7 @@
     for (var i = 0; i < TOUR_CATEGORIES.length; i++) { if (TOUR_CATEGORIES[i].v === form.tourCategory) { catLabel = TOUR_CATEGORIES[i].l; break; } }
     h += '<div class="sum-row"><span class="sum-lbl">Tour</span><span>' + escHtml(catLabel) + '</span></div>';
 
-    if (isFull && form.tourVariant && TOUR_VARIANTS[form.tourCategory]) {
+    if (isFull && form.tourVariant && TOUR_VARIANTS[form.tourCategory] && TOUR_VARIANTS[form.tourCategory].length > 1) {
       var varLabel = form.tourVariant;
       var variants = TOUR_VARIANTS[form.tourCategory];
       for (var i = 0; i < variants.length; i++) { if (variants[i].v === form.tourVariant) { varLabel = variants[i].l; break; } }
@@ -581,7 +597,7 @@
         if (!form.bike) e.push('bike');
         if (form.roomType !== 'Single' && !form.roommateName.trim()) e.push('roommateName');
       }
-      if ((form.tourCategory === 'custom' || form.tourCategory === 'oneday') && !form.customDescription.trim()) e.push('customDescription');
+      if ((form.tourCategory === 'custom' || form.tourCategory === 'oneday' || form.tourCategory === 'other') && !form.customDescription.trim()) e.push('customDescription');
     }
     if (s >= 3) {
       if (!form.yearsRiding) e.push('yearsRiding');
@@ -696,13 +712,16 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
     document.getElementById('submitError').innerHTML = '';
 
-    // Build tour name for Zoho from category + variant
+    // Build tour name for Zoho. Full tours use the live tour name; everything
+    // else (1-day, other, custom) passes the dropdown label straight through.
     var tourName = '';
-    if (form.tourCategory === 'custom') tourName = 'Custom Tour';
-    else if (form.tourCategory === 'oneday') tourName = '1-Day Tour';
-    else {
-      var dep = getSelDep();
-      tourName = dep ? dep.tour_name : form.tourVariant;
+    if (FULL_TOUR[form.tourCategory]) {
+      var depForName = getSelDep();
+      tourName = depForName ? depForName.tour_name : form.tourVariant;
+    } else {
+      for (var ci = 0; ci < TOUR_CATEGORIES.length; ci++) {
+        if (TOUR_CATEGORIES[ci].v === form.tourCategory) { tourName = TOUR_CATEGORIES[ci].l; break; }
+      }
     }
 
     var dep = getSelDep();
