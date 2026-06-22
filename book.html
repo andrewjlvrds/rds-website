@@ -237,6 +237,28 @@
     return d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
   }
 
+  // Add n days to a date string (handles DD/MM/YYYY or YYYY-MM-DD), returns YYYY-MM-DD.
+  function addDaysISO(s, n) {
+    if (!s) return '';
+    var d;
+    if (s.indexOf('/') !== -1) {
+      var p = s.split('/');
+      d = new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+    } else {
+      d = new Date(s + 'T00:00:00');
+    }
+    if (isNaN(d.getTime())) return '';
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+  }
+  // 16-day Feast shares the FoSA 21 departure but ends at Windhoek:
+  // departure + 15 days (16 inclusive). All other variants use the live tour end date.
+  function endDateFor(dep) {
+    if (!dep) return '';
+    if (form.tourVariant === 'feast-16') return addDaysISO(dep.departure_date, 15);
+    return dep.tour_end_date;
+  }
+
   function getDeps() {
     if (!tourData || !form.tourVariant) return [];
     // 16-day Feast is a hop-off at Windhoek on the same FoSA 21 departure,
@@ -399,7 +421,8 @@
       var dateOpts = [{v:'',l:'Select a departure date'}];
       for (var i = 0; i < deps.length; i++) {
         var lbl = fmtDate(deps[i].departure_date);
-        if (deps[i].tour_end_date) lbl += ' \u2014 ' + fmtDate(deps[i].tour_end_date);
+        var endD = endDateFor(deps[i]);
+        if (endD) lbl += ' \u2014 ' + fmtDate(endD);
         if (deps[i].tour_status.toLowerCase() === 'waitlist') lbl += ' (Waitlist)';
         dateOpts.push({v:deps[i].departure_date, l:lbl});
       }
@@ -741,7 +764,7 @@
       tourVariant: form.tourVariant,
       tour: tourName,
       departureDate: form.departureDate,
-      tourEndDate: dep ? dep.tour_end_date : '',
+      tourEndDate: dep ? endDateFor(dep) : '',
       customDescription: form.customDescription,
       roomType: form.roomType,
       participantType: form.participantType,
