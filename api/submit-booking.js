@@ -61,7 +61,7 @@ module.exports = async function handler(req, res) {
     // Map tour variant to Zoho Tour_Type
     var VARIANT_TYPE_MAP = {
       "feast-21": "FoSA 21",
-      "feast-16": "FoSA 16",
+      "feast-16": "FoSA 21",
       "feast-15": "FoSA 15",
       "feast-20": "FoSA 20",
       "edge-21": "Edge 21",

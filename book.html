@@ -239,7 +239,10 @@
 
   function getDeps() {
     if (!tourData || !form.tourVariant) return [];
-    return tourData.departures.filter(function(d) { return d.tour_id === form.tourVariant; });
+    // 16-day Feast is a hop-off at Windhoek on the same FoSA 21 departure,
+    // so it shares the 21-day departure dates.
+    var depKey = (form.tourVariant === 'feast-16') ? 'feast-21' : form.tourVariant;
+    return tourData.departures.filter(function(d) { return d.tour_id === depKey; });
   }
   function getSelDep() {
     if (!form.departureDate) return null;
@@ -718,6 +721,10 @@
     if (FULL_TOUR[form.tourCategory]) {
       var depForName = getSelDep();
       tourName = depForName ? depForName.tour_name : form.tourVariant;
+      // 16-day Feast rides the same FoSA 21 departure but hops off at Windhoek
+      if (form.tourVariant === 'feast-16' && tourName) {
+        tourName += ' - 16-day (hop-off Windhoek)';
+      }
     } else {
       for (var ci = 0; ci < TOUR_CATEGORIES.length; ci++) {
         if (TOUR_CATEGORIES[ci].v === form.tourCategory) { tourName = TOUR_CATEGORIES[ci].l; break; }
