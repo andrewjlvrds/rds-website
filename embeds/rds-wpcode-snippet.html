@@ -130,7 +130,7 @@ function rdsInjectPrices() {
 
           // "See all dates" link if limited and there are more, or always if data-link set
           if (linkUrl && (!showAll || (lines.length > 0 && limit > 0))) {
-            html += '<br><a href="' + linkUrl + '" style="color:#e87c1e;font-weight:600;">' + linkText + '</a>';
+            html += '<br><a href="' + linkUrl + '" style="color:#e87c1e;font-weight:600;display:inline-block;margin-top:10px;">' + linkText + '</a>';
           }
 
           div.innerHTML = html;
@@ -141,7 +141,7 @@ function rdsInjectPrices() {
           var pDiv = priceDivs[k];
           var pTourId = pDiv.getAttribute('data-tour');
           var pLabel = pDiv.getAttribute('data-label') || '';
-          var dpUrl = pDiv.getAttribute('data-link') || '/dates-prices/';
+          var dpUrl = pDiv.getAttribute('data-link') || '';
           var dpText = pDiv.getAttribute('data-link-text') || 'See all dates & prices';
 
           // earliest upcoming departure of this tour
