@@ -18,6 +18,7 @@ var TOUR_TYPE_TO_ID = {
   'BoN':      'bon-13',
   'GL':       'greatlakes-24',
   'GL 14':    'greatlakes-14',
+  'SST 14':   'sst-14',
 };
 
 var TOUR_NAMES = {
@@ -31,6 +32,7 @@ var TOUR_NAMES = {
   'bon-13':        'Best of Namibia: 13 days',
   'greatlakes-24': 'Great Lakes & Rift Valley: 24 days',
   'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
+  'sst-14':        'Southern Sweep: 14 days',
 };
 
 var FETCH_FIELDS = 'Tour_Type,Departure_Date,Status,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_BMW,Upgrade_Transalp,Shared_Room_Discount';
