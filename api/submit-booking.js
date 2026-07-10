@@ -21,7 +21,8 @@ var TOUR_TYPE_MAP = {
   "Feast of Southern Africa: 15 days": "FoSA 15",
   "Edge of Africa: 14 days": "Edge 14",
   "Edge of Africa: 12 days": "Edge 12",
-  "Best of Namibia: 13 days": "BoN",
+  "Best of Namibia: 14 days": "BoN",
+  "Best of Namibia: 13 days": "BoN", // legacy: pre-rename form submissions
   "Great Lakes & Rift Valley: 24 days": "GL 24",
   "Great Lakes & Rift Valley: 14 days": "GL 14",
 };
@@ -68,7 +69,8 @@ module.exports = async function handler(req, res) {
       "edge-14": "Edge 14",
       "edge-13": "Edge 13 SWD",
       "edge-12": "Edge 12",
-      "bon-13": "BoN"
+      "bon-14": "BoN",
+      "bon-13": "BoN"  // legacy: pre-rename form submissions
     };
     var tourType = VARIANT_TYPE_MAP[body.tourVariant] || TOUR_TYPE_MAP[body.tour] || "";
     var tourRecordId = null;
