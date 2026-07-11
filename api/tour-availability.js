@@ -76,8 +76,11 @@ module.exports = async function handler(req, res) {
     while (more && page <= 5) {
       // v8: the Riders rollup is undefined under v2 fields= (every departure
       // showed max places). See _zoho.js zohoFetchV8 note, 2026-07-11.
+      // No sort_by: v8 records API only accepts id/Created_Time/Modified_Time
+      // and rejects Departure_Date with INVALID_DATA (v2 silently allowed it).
+      // Consumers sort by date client-side.
       var result = await zoho.zohoFetchV8(token,
-        '/Tours?fields=' + FETCH_FIELDS + '&per_page=200&page=' + page + '&sort_by=Departure_Date&sort_order=asc'
+        '/Tours?fields=' + FETCH_FIELDS + '&per_page=200&page=' + page
       );
       if (result && result.data) allTours = allTours.concat(result.data);
       more = result && result.info && result.info.more_records;
