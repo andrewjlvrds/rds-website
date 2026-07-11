@@ -48,6 +48,18 @@ async function zohoFetch(token, path) {
   return await resp.json();
 }
 
+// v8 variant: rollup fields (e.g. Tours.Riders) are NOT returned by the v2
+// records API via fields= — they come back undefined. v8 returns them.
+// Added 2026-07-11 for tour-availability places_available. Additive only;
+// do not repoint existing v2 consumers without testing.
+var ZOHO_API_V8 = "https://www.zohoapis.com/crm/v8";
+async function zohoFetchV8(token, path) {
+  var resp = await fetch(ZOHO_API_V8 + path, {
+    headers: { "Authorization": "Zoho-oauthtoken " + token },
+  });
+  return await resp.json();
+}
+
 async function zohoSearch(token, module, criteria) {
   var url = ZOHO_API + "/" + module + "/search?criteria=" + encodeURIComponent(criteria);
   var resp = await fetch(url, {
@@ -64,4 +76,4 @@ function corsHeaders() {
   };
 }
 
-module.exports = { getZohoToken: getZohoToken, zohoFetch: zohoFetch, zohoSearch: zohoSearch, corsHeaders: corsHeaders, ZOHO_API: ZOHO_API };
+module.exports = { getZohoToken: getZohoToken, zohoFetch: zohoFetch, zohoFetchV8: zohoFetchV8, zohoSearch: zohoSearch, corsHeaders: corsHeaders, ZOHO_API: ZOHO_API };
