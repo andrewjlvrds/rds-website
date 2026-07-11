@@ -90,6 +90,14 @@ module.exports = async function handler(req, res) {
       };
     }
 
+    // Legacy alias: /dates-prices/ Thrive markup still carries data-tour="bon-13"
+    // (postmeta, not post_content — see rds-status website workstream 2026-07-11).
+    // Serve the 14-day pricing to the old key so live visitors see current prices.
+    // Remove once the Thrive element is edited to bon-14.
+    if (tours['bon-14'] && !tours['bon-13']) {
+      tours['bon-13'] = Object.assign({}, tours['bon-14'], { tour_id: 'bon-13' });
+    }
+
     var data = {
       updated: new Date().toISOString(),
       source: 'zoho-tour-types',
