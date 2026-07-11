@@ -74,7 +74,9 @@ module.exports = async function handler(req, res) {
     var page = 1;
     var more = true;
     while (more && page <= 5) {
-      var result = await zoho.zohoFetch(token,
+      // v8: the Riders rollup is undefined under v2 fields= (every departure
+      // showed max places). See _zoho.js zohoFetchV8 note, 2026-07-11.
+      var result = await zoho.zohoFetchV8(token,
         '/Tours?fields=' + FETCH_FIELDS + '&per_page=200&page=' + page + '&sort_by=Departure_Date&sort_order=asc'
       );
       if (result && result.data) allTours = allTours.concat(result.data);
