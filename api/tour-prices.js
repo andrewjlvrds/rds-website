@@ -24,7 +24,7 @@ var TOUR_NAMES = {
   'sst-14':   'Southern Sweep: 14 days',
 };
 
-var FETCH_FIELDS = 'Tour_Code,Name,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27';
+var FETCH_FIELDS = 'Tour_Code,Name,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28';
 
 var cache = {
   data: null,
@@ -77,6 +77,31 @@ module.exports = async function handler(req, res) {
       var priceRider = num(t.Price_Rider_27);
       if (!priceRider) continue;
 
+      // Per-year price sets (Tour_Types carries _27 and _28 field suffixes; no
+      // _26 fields exist — 2026 departures price on the Tours record itself and
+      // flow through /api/tour-availability). A year appears only when its
+      // Price_Rider is populated. Flat fields below stay 2027 for back-compat
+      // (WPCode snippet + tour pages read them).
+      var years = {};
+      if (num(t.Price_Rider_27)) {
+        years['2027'] = {
+          base_price:             String(Math.round(num(t.Price_Rider_27))),
+          pillion:                String(Math.round(num(t.Price_Pillion_27))),
+          shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_27))),
+          bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_27))),
+          bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
+        };
+      }
+      if (num(t.Price_Rider_28)) {
+        years['2028'] = {
+          base_price:             String(Math.round(num(t.Price_Rider_28))),
+          pillion:                String(Math.round(num(t.Price_Pillion_28))),
+          shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_28))),
+          bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_28))),
+          bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_28))),
+        };
+      }
+
       tours[tourId] = {
         tour_id:                tourId,
         tour_name:              TOUR_NAMES[tourId] || t.Name || t.Tour_Code,
@@ -87,6 +112,7 @@ module.exports = async function handler(req, res) {
         bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_27))),
         bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
         bike_upgrade_transalp:  '0',
+        years:                  years,
       };
     }
 
