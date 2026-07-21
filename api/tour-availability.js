@@ -27,7 +27,7 @@ var TOUR_NAMES = {
   'edge-12':       'Edge of Africa: 12 days',
   'edge-21':       'Edge of Africa: 21 days',
   'edge-13':       'Edge of Africa: 13 days',
-  'bon-14':        'Best of Namibia: 14 days',
+  'bon-14':        'Best of Namibia',
   'greatlakes-24': 'Great Lakes & Rift Valley: 24 days',
   'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
   'sst-14':        'Southern Sweep: 14 days',
