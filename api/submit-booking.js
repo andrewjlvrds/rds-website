@@ -24,6 +24,7 @@ var TOUR_TYPE_MAP = {
   "Best of Namibia": "BoN",
   "Best of Namibia: 14 days": "BoN", // legacy: pre-rename form submissions
   "Best of Namibia: 13 days": "BoN", // legacy: pre-rename form submissions
+  "Southern Sweep: 14 days": "SST 14",
   "Great Lakes & Rift Valley: 24 days": "GL 24",
   "Great Lakes & Rift Valley: 14 days": "GL 14",
 };
@@ -68,7 +69,8 @@ module.exports = async function handler(req, res) {
       "feast-20": "FoSA 20",
       "edge-21": "Edge 21",
       "edge-14": "Edge 14",
-      "edge-13": "Edge 13 SWD",
+      "sst-14": "SST 14",
+      "edge-13": "Edge 13 SWD",   // legacy: pre-rename form submissions
       "edge-12": "Edge 12",
       "bon-14": "BoN",
       "bon-13": "BoN"  // legacy: pre-rename form submissions

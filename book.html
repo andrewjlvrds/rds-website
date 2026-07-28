@@ -119,10 +119,10 @@
   };
 
   var TOUR_CATEGORIES = [
-    {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls (16 & 21 days)'},
-    {v:'edge21', l:'Edge of Africa (Long Way Up): Cape Town to the Kruger Park (21 days, 2027)'},
+    {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls'},
+    {v:'edge21', l:'Edge of Africa (Long Way Up): Cape Town to the Kruger Park'},
     {v:'edge14', l:'Edge of Africa: 14-day ride from Cape Town to the Kruger Park (Nov-Dec 2026 only)'},
-    {v:'edge13swd', l:'Edge of Africa (Short Way Down): Kruger Park to Cape Town (13 days, 2027)'},
+    {v:'sst', l:'Southern Sweep: Kruger Park to Cape Town'},
     {v:'bon', l:'Best of Namibia'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
     {v:'other', l:'One of the other tours I\u2019ve seen'},
@@ -130,7 +130,7 @@
   ];
   // Variant tour_id values MUST match the tour_id keys emitted by
   // /api/tour-availability (FoSA 21 -> feast-21, Edge 21/Edge 21 LWU -> edge-21,
-  // Edge 13 SWD -> edge-13, etc.) so live departures resolve.
+  // Southern Sweep -> sst-14, etc.) so live departures resolve.
   var TOUR_VARIANTS = {
     feast: [
       {v:'feast-21', l:'21 days - Cape Town to Victoria Falls', default:true},
@@ -142,15 +142,15 @@
     edge14: [
       {v:'edge-14', l:'14 days - Cape Town to the Kruger Park', default:true}
     ],
-    edge13swd: [
-      {v:'edge-13', l:'Edge 13 SWD - Kruger Park to Cape Town', default:true}
+    sst: [
+      {v:'sst-14', l:'Southern Sweep - Kruger Park to Cape Town', default:true}
     ],
     bon: [
       {v:'bon-14', l:'14 days - Cape Town to Namibia and back', default:true}
     ]
   };
   // Categories that need departure dates, pricing, bike selection
-  var FULL_TOUR = {feast:true, edge21:true, edge14:true, edge13swd:true, bon:true};
+  var FULL_TOUR = {feast:true, edge21:true, edge14:true, sst:true, bon:true};
 
   var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Republic of Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK and Northern Ireland','USA','Other'];
   var BIKES_STD = [
