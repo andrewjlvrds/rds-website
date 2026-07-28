@@ -120,8 +120,8 @@
 
   var TOUR_CATEGORIES = [
     {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls'},
-    {v:'edge21', l:'Edge of Africa (Long Way Up): Cape Town to the Kruger Park'},
-    {v:'edge14', l:'Edge of Africa: 14-day ride from Cape Town to the Kruger Park (Nov-Dec 2026 only)'},
+    {v:'edge21', l:'Edge of Africa: Cape Town to the Kruger Park'},
+    {v:'edge14', l:'Edge of Africa: Cape Town to the Kruger Park (14 days, Nov-Dec 2026 only)'},
     {v:'sst', l:'Southern Sweep: Kruger Park to Cape Town'},
     {v:'bon', l:'Best of Namibia'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
@@ -259,12 +259,34 @@
     return dep.tour_end_date;
   }
 
+  // Parse a DD/MM/YYYY (or YYYY-MM-DD) departure string to a sortable timestamp.
+  function depTime(s) {
+    if (!s) return 0;
+    var d;
+    if (s.indexOf('/') !== -1) {
+      var p = s.split('/');
+      d = new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+    } else {
+      d = new Date(s + 'T00:00:00');
+    }
+    var t = d.getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
   function getDeps() {
     if (!tourData || !form.tourVariant) return [];
     // 16-day Feast is a hop-off at Windhoek on the same FoSA 21 departure,
     // so it shares the 21-day departure dates.
     var depKey = (form.tourVariant === 'feast-16') ? 'feast-21' : form.tourVariant;
-    return tourData.departures.filter(function(d) { return d.tour_id === depKey; });
+    // Drop departures that have already left — the availability feed still
+    // carries them (confirmed live 2026-07-28: BoN 25/05/2026 was selectable),
+    // and sorting soonest-first would otherwise put a dead date at the top.
+    var todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    var cutoff = todayStart.getTime();
+    return tourData.departures
+      .filter(function(d) { return d.tour_id === depKey; })
+      .filter(function(d) { var t = depTime(d.departure_date); return !t || t >= cutoff; })
+      .sort(function(a, b) { return depTime(a.departure_date) - depTime(b.departure_date); });
   }
   function getSelDep() {
     if (!form.departureDate) return null;
