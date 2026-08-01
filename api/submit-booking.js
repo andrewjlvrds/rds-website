@@ -22,6 +22,7 @@ var TOUR_TYPE_MAP = {
   "Edge of Africa: 14 days": "Edge 14",
   "Edge of Africa: 12 days": "Edge 12",
   "Best of Namibia": "BoN",
+  "Best of Namibia: 15 days": "BoN",
   "Best of Namibia: 14 days": "BoN", // legacy: pre-rename form submissions
   "Best of Namibia: 13 days": "BoN", // legacy: pre-rename form submissions
   "Southern Sweep: 14 days": "SST 14",
