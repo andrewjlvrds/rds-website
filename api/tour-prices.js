@@ -90,6 +90,9 @@ module.exports = async function handler(req, res) {
           shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_27))),
           bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_27))),
           bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
+          // R1300GS mirrors the R1250GS rate per tour (Andrew 2026-08-04). No separate
+          // Tour_Types field exists; add Upgrade_BMW_R1300GS_27 if they ever diverge.
+          bike_upgrade_bmw1300gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
         };
       }
       if (num(t.Price_Rider_28)) {
@@ -99,6 +102,9 @@ module.exports = async function handler(req, res) {
           shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_28))),
           bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_28))),
           bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_28))),
+          // R1300GS mirrors the R1250GS rate per tour (Andrew 2026-08-04). No separate
+          // Tour_Types field exists; add Upgrade_BMW_R1300GS_28 if they ever diverge.
+          bike_upgrade_bmw1300gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_28))),
         };
       }
 
@@ -111,6 +117,9 @@ module.exports = async function handler(req, res) {
         shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_27))),
         bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_27))),
         bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
+        // R1300GS mirrors the R1250GS rate per tour (Andrew 2026-08-04). No separate
+        // Tour_Types field exists; add Upgrade_BMW_R1300GS_27 if they ever diverge.
+        bike_upgrade_bmw1300gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
         bike_upgrade_transalp:  '0',
         years:                  years,
       };

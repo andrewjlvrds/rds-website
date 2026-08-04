@@ -160,7 +160,8 @@
   ];
   var BIKES_UP = [
     {v:'crf1100', l:'Honda Africa Twin CRF1100', k:'bike_upgrade_crf1100'},
-    {v:'bmw1250gs', l:'BMW R1250GS', k:'bike_upgrade_bmw1250gs'}
+    {v:'bmw1250gs', l:'BMW R1250GS', k:'bike_upgrade_bmw1250gs'},
+    {v:'bmw1300gs', l:'BMW R1300GS', k:'bike_upgrade_bmw1300gs'}
   ];
   var YEARS = ['Less than 1 year','1\u20133 years','4\u201310 years','More than 10 years'];
   var ONROAD = ['Beginner \u2014 I\u2019m new at road touring','Intermediate \u2014 I\u2019ve got some limited road touring experience','Experienced \u2014 I\u2019ve done lots of road tours'];
@@ -307,6 +308,7 @@
     var upgrade = 0;
     if (form.bike === 'crf1100') upgrade = parsePrice(dep.bike_upgrade_crf1100);
     if (form.bike === 'bmw1250gs') upgrade = parsePrice(dep.bike_upgrade_bmw1250gs);
+    if (form.bike === 'bmw1300gs') upgrade = parsePrice(dep.bike_upgrade_bmw1300gs);
     var pillion = (form.addPillion === 'Yes') ? parsePrice(dep.pillion) : 0;
     var shared = (form.roomType !== 'Single') ? parsePrice(dep.shared_room_discount) : 0;
     return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
@@ -500,7 +502,7 @@
       // Upgrades — show based on tour variant, not just selected departure
       var upgradeSource = dep;
       if (!upgradeSource && deps.length > 0) upgradeSource = deps[0]; // use first departure for upgrade prices
-      if (upgradeSource && (upgradeSource.bike_upgrade_crf1100 || upgradeSource.bike_upgrade_bmw1250gs)) {
+      if (upgradeSource && (upgradeSource.bike_upgrade_crf1100 || upgradeSource.bike_upgrade_bmw1250gs || upgradeSource.bike_upgrade_bmw1300gs)) {
         h += '<div class="bike-section bike-divider">Upgrades</div>';
         for (var i = 0; i < BIKES_UP.length; i++) {
           var amt = Number(upgradeSource[BIKES_UP[i].k]) || 0;
