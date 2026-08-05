@@ -138,6 +138,20 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Sort departures by departure date ascending (dd/mm/yyyy). The feed
+    // previously shipped in Zoho record order, which made date widgets with a
+    // display limit drop the earliest departures (found 2026-08-05: LP dates
+    // block missing Mar/Apr 2027 FoSA). Server-side sort fixes every consumer,
+    // including the WPCode snippet that slices without sorting.
+    departures.sort(function (a, b) {
+      function key(dep) {
+        var p = String(dep.departure_date || '').split('/');
+        if (p.length !== 3) return 0;
+        return parseInt(p[2], 10) * 10000 + parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
+      }
+      return key(a) - key(b);
+    });
+
     var data = {
       updated:    new Date().toISOString(),
       source:     'zoho',
