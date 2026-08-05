@@ -113,8 +113,13 @@ function rdsInjectPrices() {
             if (dep.tour_status.toLowerCase() === 'waitlist') {
               range += ' \u2014 <em>Waitlist</em>';
             }
-            lines.push(range);
+            lines.push({ d: depDate, html: range });
           }
+
+          // Sort by departure date ascending before limiting (feed order is
+          // not guaranteed; server sorts since 2026-08-05, this is defensive).
+          lines.sort(function (a, b) { return a.d - b.d; });
+          for (var s = 0; s < lines.length; s++) { lines[s] = lines[s].html; }
 
           // Apply limit
           var showAll = (limit <= 0 || lines.length <= limit);
