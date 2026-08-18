@@ -55,7 +55,15 @@ module.exports = async function handler(req, res) {
 
   try {
     var body = req.body;
-    if (!body || !body.email || !body.tour || !body.departureDate) {
+    if (!body || !body.email || !body.tour) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    // Departure date is only collected by the form for FULL tours. The 1-Day,
+    // "one of the other tours" and Custom categories never collect one, so a
+    // blanket departureDate requirement rejected every one of those
+    // submissions with "Missing required fields" (fixed 2026-08-18).
+    var FULL_TOUR_CATEGORIES = { feast: 1, edge21: 1, edge14: 1, sst: 1, bon: 1 };
+    if (FULL_TOUR_CATEGORIES[body.tourCategory] && !body.departureDate) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -107,7 +115,7 @@ module.exports = async function handler(req, res) {
     // Add tour short code and date to make it unique
     var shortTour = tourType || body.tour.substring(0, 10);
     var zohoDate = toZohoDate(body.departureDate) || "";
-    var shortDate = zohoDate.substring(5, 7) + "/" + zohoDate.substring(2, 4);
+    var shortDate = zohoDate ? (zohoDate.substring(5, 7) + "/" + zohoDate.substring(2, 4)) : "enquiry";
     var ts = Date.now().toString(36);
     bookingName = bookingName + " - " + shortTour + " " + shortDate + " " + ts;
 
@@ -138,7 +146,6 @@ module.exports = async function handler(req, res) {
       Pillion: hasPillion ? "Yes" : "No",
 
       // Motorcycle
-      Motorcycle_Preference: BIKE_MAP[bikeKey] || "",
       CRF1100_Upgrade: isUpgradeCRF ? "Yes" : "No",
       BMW1250_Upgrade: isUpgradeBMW ? "Yes" : "No",
 
@@ -172,6 +179,11 @@ module.exports = async function handler(req, res) {
       Booking_Date: new Date().toISOString().split("T")[0],
       Booking_Status: "New Booking",
     };
+
+    // Picklists reject empty strings — only set when we have a real value
+    if (BIKE_MAP[bikeKey]) {
+      record.Motorcycle_Preference = BIKE_MAP[bikeKey];
+    }
 
     // Link to Tour record if found
     if (tourRecordId) {
