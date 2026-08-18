@@ -40,6 +40,19 @@ var BIKE_MAP = {
   "own": "Own Bike",
 };
 
+// Zoho single-line text fields cap at 255 chars. A rider writing a paragraph in
+// any free-text box used to hard-fail the whole submission with INVALID_DATA
+// (four confirmed consecutive failures, 18 Aug 2026). Never lose a booking to a
+// long answer: store the capped value on the field, keep the full text, and
+// write it to a Note on the record so nothing the rider typed is discarded.
+var ZOHO_TEXT_MAX = 255;
+function capText(overflow, label, value) {
+  var v = (value == null ? "" : String(value)).trim();
+  if (v.length <= ZOHO_TEXT_MAX) return v;
+  overflow.push({ label: label, text: v });
+  return v.substring(0, ZOHO_TEXT_MAX - 3) + "...";
+}
+
 module.exports = async function handler(req, res) {
   // CORS
   var headers = corsHeaders();
@@ -111,6 +124,8 @@ module.exports = async function handler(req, res) {
     var hasRoommate = body.sharedRoomName && body.sharedRoomName.trim() !== "";
     var hasPillion = body.addPillion === "Yes";
 
+    var overflow = [];
+
     var bookingName = (body.firstName || "").trim() + " " + (body.lastName || "").trim();
     // Add tour short code and date to make it unique
     var shortTour = tourType || body.tour.substring(0, 10);
@@ -125,21 +140,20 @@ module.exports = async function handler(req, res) {
       Last_Name: (body.lastName || "").trim(),
       Email: (body.email || "").trim(),
       Phone_1: (body.phone || "").trim(),
-      Nationality: body.country || "",
       Nationality1: body.country || "",
 
       // Tour fields
-      Which_Tour: body.tour || "",
+      Which_Tour: capText(overflow, "Which tour", body.tour),
       Tour_Name: body.tour || "",
       // Free-text intent from 1-Day / "other tours" / Custom rows (empty for full tours)
-      Booking_Notes: (body.customDescription || "").trim(),
+      Booking_Notes: capText(overflow, "What they asked for", body.customDescription),
       Departure_Dates: body.departureDate || "",
       Tour_start_date: toZohoDate(body.departureDate),
       Tour_end_date: toZohoDate(body.tourEndDate),
 
       // Room
       Are_you_sharing_a_room: hasRoommate ? "Yes" : "No",
-      Roommate_Name: hasRoommate ? body.sharedRoomName.trim() : "",
+      Roommate_Name: hasRoommate ? capText(overflow, "Roommate name", body.sharedRoomName) : "",
       Room_Preference_2: body.roomType || "Single",
 
       // Pillion
@@ -157,16 +171,18 @@ module.exports = async function handler(req, res) {
 
       // Riding experience
       How_many_years_riding: body.yearsRiding || "",
-      Bike_and_Gear_Notes: body.bikeExperience || "",
-      Previous_Adventure_Riding_Experience: body.previousTours || "",
+      Bike_and_Gear_Notes: capText(overflow, "Bike and gear experience", body.bikeExperience),
+      Previous_Adventure_Riding_Experience: capText(overflow, "Previous adventure riding", body.previousTours),
       Tar_Roads_Experience: body.onroad || "",
       Gravel_Roads_Experience: body.offroad || "",
       Do_you_have_a_bike_licence: body.licence ? "Yes" : "No",
-      Any_physical_or_medical_limitations: body.medical || "",
-      Anything_else_we_should_know: body.anythingElse || "",
+      // NOTE: Zoho's api_name carries a typo ("limitiations"). Writing the
+      // correctly-spelled name silently discarded every rider's medical answer.
+      Any_physical_or_medical_limitiations: capText(overflow, "Physical or medical limitations", body.medical),
+      Anything_else_we_should_know: capText(overflow, "Anything else we should know", body.anythingElse),
 
       // Attribution
-      How_did_you_find_out_about_RDS: body.referral || "",
+      How_did_you_find_out_about_RDS: capText(overflow, "How they found RDS", body.referral),
 
       // T&Cs
       Waiver_Signed: body.terms === true,
@@ -224,6 +240,32 @@ module.exports = async function handler(req, res) {
 
     var bookingId = createResult.data[0].details.id;
 
+    // ── 3b. Preserve any answer that had to be capped ──
+    if (overflow.length > 0) {
+      try {
+        var noteBody = "The rider's full answers, as typed. Zoho caps these fields at "
+          + ZOHO_TEXT_MAX + " characters, so the record above shows a shortened version.\n\n"
+          + overflow.map(function (o) { return o.label + ":\n" + o.text; }).join("\n\n");
+        await fetch(ZOHO_API + "/Notes", {
+          method: "POST",
+          headers: {
+            "Authorization": "Zoho-oauthtoken " + token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            data: [{
+              Note_Title: "Full booking form answers (long text)",
+              Note_Content: noteBody.substring(0, 30000),
+              Parent_Id: { id: bookingId, module: { api_name: "Bookings" } },
+            }],
+          }),
+        });
+      } catch (e) {
+        // Non-fatal — the booking exists; only the verbatim overflow copy is at risk
+        console.error("Overflow note failed:", e.message);
+      }
+    }
+
     // ── 4. Lead source attribution — search Contacts/Leads by email ──
     try {
       var email = (body.email || "").trim();
@@ -265,6 +307,7 @@ module.exports = async function handler(req, res) {
       success: true,
       bookingId: bookingId,
       tourLinked: !!tourRecordId,
+      truncatedFields: overflow.length,
     });
 
   } catch (err) {
