@@ -246,7 +246,10 @@ module.exports = async function handler(req, res) {
         var noteBody = "The rider's full answers, as typed. Zoho caps these fields at "
           + ZOHO_TEXT_MAX + " characters, so the record above shows a shortened version.\n\n"
           + overflow.map(function (o) { return o.label + ":\n" + o.text; }).join("\n\n");
-        await fetch(ZOHO_API + "/Notes", {
+        // ZOHO_API is the v2 base, which requires the flat Parent_Id + se_module
+        // shape. The v8 nested { id, module } form is rejected here with
+        // MANDATORY_NOT_FOUND $se_module — verified live 18 Aug 2026.
+        var noteResp = await fetch(ZOHO_API + "/Notes", {
           method: "POST",
           headers: {
             "Authorization": "Zoho-oauthtoken " + token,
@@ -256,10 +259,15 @@ module.exports = async function handler(req, res) {
             data: [{
               Note_Title: "Full booking form answers (long text)",
               Note_Content: noteBody.substring(0, 30000),
-              Parent_Id: { id: bookingId, module: { api_name: "Bookings" } },
+              Parent_Id: bookingId,
+              se_module: "Bookings",
             }],
           }),
         });
+        var noteResult = await noteResp.json();
+        if (!noteResult.data || noteResult.data[0].code !== "SUCCESS") {
+          console.error("Overflow note rejected:", JSON.stringify(noteResult));
+        }
       } catch (e) {
         // Non-fatal — the booking exists; only the verbatim overflow copy is at risk
         console.error("Overflow note failed:", e.message);
