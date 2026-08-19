@@ -7,7 +7,7 @@ var zoho = require('./_zoho');
 var TOUR_TYPE_TO_ID = {
   'FoSA 20': 'feast-20',
   'FoSA 21': 'feast-21',
-  'FoSA 15': 'feast-15',
+  'FoSA 16': 'feast-16',
   'Edge 14':  'edge-14',
   'Edge 12':  'edge-12',
   'Edge 21':  'edge-21',
@@ -22,7 +22,7 @@ var TOUR_TYPE_TO_ID = {
 var TOUR_NAMES = {
   'feast-20':      'Feast of Southern Africa: 20 days',
   'feast-21':      'Feast of Southern Africa: 21 days',
-  'feast-15':      'Feast of Southern Africa: 15 days',
+  'feast-16':      'Feast of Southern Africa: 16 days',
   'edge-14':       'Edge of Africa: 14 days',
   'edge-12':       'Edge of Africa: 12 days',
   'edge-21':       'Edge of Africa: 21 days',

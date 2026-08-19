@@ -106,6 +106,7 @@
 
   // State
   var tourData = null;
+  var priceData = null;
   var fxRates = null;
   var step = 1;
   var form = {
@@ -300,15 +301,29 @@
     if (!v) return 0;
     return Number(String(v).replace(/,/g, '')) || 0;
   }
+  // 16-day Feast rides the FoSA 21 departure but is priced from its own
+  // Tour_Types record (FoSA 16) via /api/tour-prices, year-matched to the departure.
+  function priceSource(dep) {
+    if (form.tourVariant !== 'feast-16' || !priceData || !priceData.tours || !priceData.tours['feast-16']) return dep;
+    var t = priceData.tours['feast-16'];
+    var yr = (dep.departure_date || '').slice(-4);
+    var y = (t.years && t.years[yr]) ? t.years[yr] : t;
+    return {
+      base_price: y.base_price, pillion: y.pillion,
+      shared_room_discount: -Math.abs(parsePrice(y.shared_room_discount)),
+      bike_upgrade_crf1100: y.bike_upgrade_crf1100, bike_upgrade_bmw1250gs: y.bike_upgrade_bmw1250gs
+    };
+  }
   function getPricing() {
     var dep = getSelDep();
     if (!dep) return { base:0, upgrade:0, pillion:0, shared:0, total:0 };
-    var base = parsePrice(dep.base_price);
+    var src = priceSource(dep);
+    var base = parsePrice(src.base_price);
     var upgrade = 0;
-    if (form.bike === 'crf1100') upgrade = parsePrice(dep.bike_upgrade_crf1100);
-    if (form.bike === 'bmw1250gs') upgrade = parsePrice(dep.bike_upgrade_bmw1250gs);
-    var pillion = (form.addPillion === 'Yes') ? parsePrice(dep.pillion) : 0;
-    var shared = (form.roomType !== 'Single') ? parsePrice(dep.shared_room_discount) : 0;
+    if (form.bike === 'crf1100') upgrade = parsePrice(src.bike_upgrade_crf1100);
+    if (form.bike === 'bmw1250gs') upgrade = parsePrice(src.bike_upgrade_bmw1250gs);
+    var pillion = (form.addPillion === 'Yes') ? parsePrice(src.pillion) : 0;
+    var shared = (form.roomType !== 'Single') ? parsePrice(src.shared_room_discount) : 0;
     return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
   }
 
@@ -837,6 +852,10 @@
   }
 
   // ── Init ──
+  fetch(API_BASE + '/api/tour-prices')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { priceData = data; if (tourData) render(); })
+    .catch(function() { priceData = null; });
   fetch(API_BASE + '/api/tour-availability')
     .then(function(r) { return r.json(); })
     .then(function(data) { tourData = data; render(); })

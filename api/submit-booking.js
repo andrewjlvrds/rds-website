@@ -18,7 +18,7 @@ function toZohoDate(s) {
 var TOUR_TYPE_MAP = {
   "Feast of Southern Africa: 21 days": "FoSA 21",
   "Feast of Southern Africa: 16 days": "FoSA 16",
-  "Feast of Southern Africa: 15 days": "FoSA 15",
+  "Feast of Southern Africa: 15 days": "FoSA 16", // legacy label, product renamed 16-day 2026-08-19
   "Edge of Africa: 14 days": "Edge 14",
   "Edge of Africa: 12 days": "Edge 12",
   "Best of Namibia": "BoN",
@@ -88,7 +88,7 @@ module.exports = async function handler(req, res) {
     var VARIANT_TYPE_MAP = {
       "feast-21": "FoSA 21",
       "feast-16": "FoSA 21",
-      "feast-15": "FoSA 15",
+      "feast-15": "FoSA 21", // legacy id; 16-day hop-off rides the FoSA 21 departure
       "feast-20": "FoSA 20",
       "edge-21": "Edge 21",
       "edge-14": "Edge 14",
