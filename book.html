@@ -152,6 +152,11 @@
   };
   // Categories that need departure dates, pricing, bike selection
   var FULL_TOUR = {feast:true, edge21:true, edge14:true, sst:true, bon:true};
+  // Flat 1-Day tour price. Not Zoho-backed (no Tour_Types record for this
+  // product) so it's a constant here rather than pulled from /api/tour-prices.
+  // Pillions ride free — reflected as a zero pillion line, not omitted, so the
+  // cost summary states it rather than leaving a silent gap.
+  var ONEDAY_PRICE = 8500;
 
   var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Republic of Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK and Northern Ireland','USA','Other'];
   var BIKES_STD = [
@@ -315,6 +320,9 @@
     };
   }
   function getPricing() {
+    if (form.tourCategory === 'oneday') {
+      return { base: ONEDAY_PRICE, upgrade: 0, pillion: 0, shared: 0, total: ONEDAY_PRICE };
+    }
     var dep = getSelDep();
     if (!dep) return { base:0, upgrade:0, pillion:0, shared:0, total:0 };
     var src = priceSource(dep);
@@ -483,6 +491,17 @@
     }
     if (form.tourCategory === 'oneday') {
       h += textareaHtml('customDescription','What are you interested in?',true,form.customDescription,'e.g. Cape Peninsula, Winelands, West Coast \u2014 or tell us what you\u2019re after');
+
+      h += '<div style="margin-top:20px">' + inputHtml('departureDate','Preferred Date',true,'date',form.departureDate,'') + '</div>';
+      h += '<p class="helper">This isn\u2019t a fixed departure \u2014 we\u2019ll confirm availability for this date and get back to you.</p>';
+
+      h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
+
+      h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
+      h += '<div class="price-row"><span>Rider</span><span class="price-val">' + fmt(ONEDAY_PRICE) + '</span></div>';
+      if (form.addPillion === 'Yes') h += '<div class="price-row"><span>Pillion</span><span class="price-val green">Free</span></div>';
+      h += '<div class="price-row price-total"><span style="font-weight:600;color:#e0e0e0">Total</span><span class="price-val" style="color:#D97B2B;font-weight:700;font-size:18px">' + fmt(ONEDAY_PRICE) + '</span></div>';
+      h += '</div>';
     }
     if (form.tourCategory === 'other') {
       h += textareaHtml('customDescription','Which tour did you see, and what would you like to know?',true,form.customDescription,'Tell us which tour caught your eye');
@@ -611,6 +630,9 @@
     if (isFull && form.departureDate) {
       h += '<div class="sum-row"><span class="sum-lbl">Departure</span><span>' + fmtDate(form.departureDate) + '</span></div>';
     }
+    if (form.tourCategory === 'oneday' && form.departureDate) {
+      h += '<div class="sum-row"><span class="sum-lbl">Preferred Date</span><span>' + fmtDate(form.departureDate) + '</span></div>';
+    }
     if (isFull && form.bike) {
       var allBikes = BIKES_STD.concat(BIKES_UP);
       var bikeName = form.bike;
@@ -621,7 +643,16 @@
       h += '<div class="sum-row"><span class="sum-lbl">Room</span><span>' + escHtml(form.roomType) + ' with ' + escHtml(form.roommateName) + '</span></div>';
     }
     if (isFull && form.addPillion === 'Yes') h += '<div class="sum-row"><span class="sum-lbl">Pillion</span><span>Yes</span></div>';
+    if (form.tourCategory === 'oneday' && form.addPillion === 'Yes') h += '<div class="sum-row"><span class="sum-lbl">Pillion</span><span>Yes (free)</span></div>';
     if (isFull && dep) {
+      var p = getPricing();
+      h += '<div class="sum-row" style="border-top:1px solid #252525;padding-top:10px;margin-top:6px"><span style="color:#999;font-weight:600">Total</span><span style="color:#D97B2B;font-weight:700">' + fmt(p.total) + '</span></div>';
+      var localSum = fmtLocal(p.total);
+      if (localSum) {
+        h += '<div style="text-align:right;font-size:12px;color:#999;margin-top:2px;font-style:italic">' + localSum + '</div>';
+      }
+    }
+    if (form.tourCategory === 'oneday') {
       var p = getPricing();
       h += '<div class="sum-row" style="border-top:1px solid #252525;padding-top:10px;margin-top:6px"><span style="color:#999;font-weight:600">Total</span><span style="color:#D97B2B;font-weight:700">' + fmt(p.total) + '</span></div>';
       var localSum = fmtLocal(p.total);
@@ -661,6 +692,10 @@
         if (form.roomType !== 'Single' && !form.roommateName.trim()) e.push('roommateName');
       }
       if ((form.tourCategory === 'custom' || form.tourCategory === 'oneday' || form.tourCategory === 'other') && !form.customDescription.trim()) e.push('customDescription');
+      if (form.tourCategory === 'oneday') {
+        if (!form.departureDate) e.push('departureDate');
+        if (!form.addPillion) e.push('addPillion');
+      }
     }
     if (s >= 3) {
       if (!form.yearsRiding) e.push('yearsRiding');
