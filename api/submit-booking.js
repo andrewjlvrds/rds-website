@@ -81,6 +81,9 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // testMode (secret-gated): TEST-prefixed name, no guest email, notification subject prefixed TEST
+    var testMode = !!(body.testMode && process.env.DAY_BRIDGE_KEY && body.secret === process.env.DAY_BRIDGE_KEY);
+
     var token = await getZohoToken();
 
     // ── 1. Search Tours module for matching tour record ──
@@ -134,6 +137,7 @@ module.exports = async function handler(req, res) {
     var shortDate = zohoDate ? (zohoDate.substring(5, 7) + "/" + zohoDate.substring(2, 4)) : "enquiry";
     var ts = Date.now().toString(36);
     bookingName = bookingName + " - " + shortTour + " " + shortDate + " " + ts;
+    if (testMode) bookingName = "TEST " + bookingName;
 
     var record = {
       Name: bookingName,
@@ -227,7 +231,11 @@ module.exports = async function handler(req, res) {
         "Authorization": "Zoho-oauthtoken " + token,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ data: [record] }),
+      // trigger:[] — the Zoho-native "Booking form confirmation" workflow (signed Darren, template
+      // 6543704000008627511) no longer fires for form bookings; rds-client-ops api/booking-ack.js
+      // sends the repo-stored acknowledgement + the internal New Tour Booking notification instead
+      // (Andrew, 11 Sep 2026: emails live in the repo, not in Zoho).
+      body: JSON.stringify({ data: [record], trigger: [] }),
     });
     var createResult = await createResp.json();
 
@@ -311,12 +319,22 @@ module.exports = async function handler(req, res) {
       console.error("Lead source lookup failed:", e.message);
     }
 
+    // ── 4b. Acknowledgement + internal notification via rds-client-ops (repo-stored template) ──
+    var ack = null;
+    try {
+      if (process.env.DAY_BRIDGE_KEY) {
+        var ar = await fetch("https://rds-client-ops.vercel.app/api/booking-ack", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.DAY_BRIDGE_KEY }, body: JSON.stringify({ bookingId: bookingId, testMode: testMode }) });
+        ack = { status: ar.status, result: await ar.json().catch(function () { return {}; }) };
+      } else { ack = { error: "DAY_BRIDGE_KEY missing" }; }
+    } catch (e) { ack = { error: e.message }; console.error("booking-ack bridge failed:", e.message); }
+
     // ── 5. Return success ──
     return res.status(200).json({
       success: true,
       bookingId: bookingId,
       tourLinked: !!tourRecordId,
       truncatedFields: overflow.length,
+      ack: ack,
     });
 
   } catch (err) {
