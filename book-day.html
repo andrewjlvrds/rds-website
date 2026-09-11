@@ -36,7 +36,7 @@ input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid
 <div class="two"><div><label>Preferred date *</label><input name="date" type="date" required></div><div><label>Other dates that would also work</label><input name="altDates" placeholder="e.g. any day 19-22 Oct"></div></div>
 <label>Route *</label><select name="route" id="route"></select>
 <p class="note" id="routeNote"></p>
-<div class="chk"><input type="checkbox" name="pillion" id="pillion"><label for="pillion" style="margin:0;font-weight:500">One rider is bringing a pillion passenger (ask us for a pillion quote)</label></div>
+<div class="chk"><input type="checkbox" name="pillion" id="pillion"><label for="pillion" style="margin:0;font-weight:500">One rider is bringing a pillion passenger - pillions ride free</label></div>
 </div>
 <div class="card"><h2>Riders and bikes</h2>
 <p class="note">One entry per paying rider. Bike choice is a preference - Andrew confirms the actual bike for your date with your booking.</p>
@@ -82,7 +82,7 @@ function renderQuote(){var rid=document.getElementById('route').value;var q=quot
   var head=CFG.status==='published'?'<div style="font-weight:600;margin-bottom:8px">Your price</div>':'<div style="margin-bottom:8px"><span class="badge">Proposed pricing</span> <span style="font-size:13px">Andrew confirms the price with your booking. These figures are indicative.</span></div>';
   if(!q.priceable){el.innerHTML=head+'<div style="font-size:14px">'+(rid==='custom'?'Custom routes are quoted individually.':'Tell us a bit about what you\u2019d like and Andrew will suggest a route and price.')+' Route prices start from '+fmtR(Math.min.apply(null,CFG.routes.filter(function(r){return r.base;}).map(function(r){return r.base;})))+' per rider.</div>';return;}
   var rows=q.riders.map(function(r){return '<tr><td>Rider '+r.i+' - '+esc(r.bike.label)+(r.pct?' <span style="opacity:.75">('+r.pct+'% group discount)</span>':'')+(r.sup?' <span style="opacity:.75">(+'+fmtR(r.sup)+' bike)</span>':'')+'</td><td>'+fmtR(r.total)+'</td></tr>';}).join('');
-  el.innerHTML=head+'<table>'+rows+'<tr class="tot"><td>Group total - '+esc(q.route.label)+'</td><td>'+fmtR(q.groupTotal)+'</td></tr></table><div class="note" style="color:#cfd6e2;margin-top:8px">Paid by card on arrival. No deposit. Bike supplements are not discounted; pillions and guides don\u2019t count as paying riders.</div>';}
+  el.innerHTML=head+'<table>'+rows+'<tr class="tot"><td>Group total - '+esc(q.route.label)+'</td><td>'+fmtR(q.groupTotal)+'</td></tr></table><div class="note" style="color:#cfd6e2;margin-top:8px">Pillions ride free. Paid by card on arrival. No deposit. Bike supplements are not discounted; pillions and guides don\u2019t count as paying riders.</div>';}
 fetch('/api/day-pricing').then(function(r){return r.json();}).then(function(c){CFG=c;var sel=document.getElementById('route');sel.innerHTML=c.routes.map(function(r){return '<option value="'+r.id+'">'+esc(r.label)+(r.base?' - from '+fmtR(r.base)+' per rider':'')+'</option>';}).join('');
   var pre=ROUTE_IN[qs.get('route')];if(pre)sel.value=pre;else sel.value='help';sel.onchange=renderQuote;
   var pb=qs.get('bike');if(pb&&c.bikes.some(function(b){return b.id===pb;}))riders[0].bike=pb;
