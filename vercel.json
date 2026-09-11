@@ -3,10 +3,6 @@
     {
       "source": "/book",
       "destination": "/book.html"
-    },
-    {
-      "source": "/book-day",
-      "destination": "/book-day.html"
     }
   ],
   "headers": [
