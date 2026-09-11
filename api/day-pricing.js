@@ -10,8 +10,8 @@
 // carries the same figures. Existing bookings keep their own snapshot; nothing
 // here ever recalculates a historical booking (e.g. Anna BK26334 = R8,500).
 var CONFIG = {
-  version: '2026-09-11.2',
-  status: 'proposed',           // 'proposed' | 'published'
+  version: '2026-09-11.3',
+  status: 'published',          // 'proposed' | 'published' - PUBLISHED on Andrew's go-live instruction 11 Sep 2026 (page carries these figures)
   currency: 'ZAR',
   legacyPublishedPrice: 8500,   // the figure still on the live page today; informational only
   routes: [
