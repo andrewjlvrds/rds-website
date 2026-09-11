@@ -1,0 +1,102 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Book a one-day ride from Cape Town - Ride Down South</title>
+<meta name="description" content="Request your guided one-day motorcycle ride from Cape Town: choose a date, route and bike for each rider. Andrew confirms by email; pay by card on the day.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1422;--ink:#070e12;--gold:#f7b605}
+*{box-sizing:border-box}body{margin:0;font-family:'Montserrat',Arial,sans-serif;background:#f3f2ee;color:#1e2430;font-size:16px;line-height:1.5}
+.hero{background:var(--navy) url('https://tours.ridedownsouth.com/img/feast21-hero-misty-cliffs-v2-wide.webp') center/cover;padding:56px 20px;color:#fff;text-shadow:1px 1px 2px #070e12}
+.hero .in{max-width:900px;margin:0 auto}.hero h1{font-size:38px;font-weight:600;margin:0 0 6px;line-height:1.1}.hero p{font-size:18px;font-weight:500;margin:0}
+main{max-width:900px;margin:-24px auto 60px;padding:0 16px}
+.card{background:#fff;border-radius:6px;padding:26px 28px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+h2{font-size:22px;font-weight:600;color:var(--navy);margin:0 0 14px}h3{font-size:16px;font-weight:600;margin:18px 0 8px}
+label{display:block;font-size:13px;font-weight:600;color:#444;margin:12px 0 5px}
+input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid #cfd2d8;border-radius:6px;background:#fff}textarea{min-height:90px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}@media(max-width:600px){.two{grid-template-columns:1fr}.hero h1{font-size:30px}}
+.rider{border:1px solid #e4e6ea;border-radius:6px;padding:12px 14px;margin-top:10px;background:#fafaf8}
+.rider .top{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px}
+.link{background:none;border:0;color:#7a5a00;font:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:0}
+.btn{display:inline-block;background:var(--gold);color:var(--navy);font-weight:600;font-size:18px;border:2px solid var(--gold);border-radius:100px;padding:14px 34px;cursor:pointer;font-family:inherit}
+.btn:disabled{opacity:.5}.btn.sec{background:#fff;border-color:var(--navy);font-size:14px;padding:9px 18px}
+.quote{background:var(--navy);color:#fff;border-radius:6px;padding:18px 20px;margin-top:16px}.quote table{width:100%;border-collapse:collapse;font-size:15px}.quote td{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.12)}.quote td:last-child{text-align:right;white-space:nowrap}.quote .tot td{font-weight:700;font-size:18px;border:0;padding-top:12px}
+.note{font-size:13px;color:#555}.badge{display:inline-block;background:#fff3c4;color:#7a5a00;border-radius:100px;padding:2px 10px;font-size:12px;font-weight:600}
+.err{color:#a03028;font-weight:600;margin-top:10px}.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin-top:12px}.chk input{width:auto;margin-top:4px}
+.success{text-align:center;padding:40px 20px}
+</style></head><body>
+<section class="hero"><div class="in"><h1>Book a one-day ride</h1><p>Choose your date, route and bikes. Andrew checks availability and confirms by email. Pay by card on the day.</p></div></section>
+<main>
+<form id="f" novalidate>
+<div class="card"><h2>Your details</h2>
+<div class="two"><div><label>First name *</label><input name="firstName" required></div><div><label>Last name *</label><input name="lastName" required></div></div>
+<div class="two"><div><label>Email *</label><input name="email" type="email" required></div><div><label>Mobile / WhatsApp (with country code) *</label><input name="phone" required></div></div>
+<label>Country</label><input name="country" placeholder="e.g. Germany">
+<input name="hp_field" style="display:none" tabindex="-1" autocomplete="off">
+</div>
+<div class="card"><h2>Your ride</h2>
+<div class="two"><div><label>Preferred date *</label><input name="date" type="date" required></div><div><label>Other dates that would also work</label><input name="altDates" placeholder="e.g. any day 19-22 Oct"></div></div>
+<label>Route *</label><select name="route" id="route"></select>
+<p class="note" id="routeNote"></p>
+<div class="chk"><input type="checkbox" name="pillion" id="pillion"><label for="pillion" style="margin:0;font-weight:500">One rider is bringing a pillion passenger (ask us for a pillion quote)</label></div>
+</div>
+<div class="card"><h2>Riders and bikes</h2>
+<p class="note">One entry per paying rider. Bike choice is a preference - Andrew confirms the actual bike for your date with your booking.</p>
+<div id="riders"></div>
+<div style="margin-top:12px"><button type="button" class="btn sec" id="addRider">+ Add another rider</button></div>
+<div class="quote" id="quote"></div>
+</div>
+<div class="card"><h2>A bit about your riding</h2>
+<label>Riding experience (years riding, touring, bikes you know)</label><textarea name="experience"></textarea>
+<label>What do you ride at home?</label><input name="ownBike">
+<div class="chk"><input type="checkbox" name="licence" id="licence"><label for="licence" style="margin:0;font-weight:500">I hold a valid motorcycle licence</label></div>
+<label>Licence number</label><input name="licenceNumber">
+<label>Gear you'd like to borrow (helmet / jacket / gloves, with sizes)</label><input name="gear" placeholder="e.g. helmet L, jacket XL">
+<label>Any medical conditions we should know about?</label><input name="medical">
+<label>Emergency contact (name, relationship, number)</label><input name="emergency">
+<label>Anything else? Places you'd like to see, questions, requests</label><textarea name="notes"></textarea>
+<label>How did you hear about us?</label><input name="referral">
+<div class="chk"><input type="checkbox" name="terms" id="terms" required><label for="terms" style="margin:0;font-weight:500">I've read the <a href="https://ridedownsouth.com/terms-and-conditions/" target="_blank" rel="noopener">terms and conditions</a>. I understand this is a request; nothing is booked until Andrew confirms by email. *</label></div>
+<div class="chk"><input type="checkbox" name="consent" id="consent"><label for="consent" style="margin:0;font-weight:500">Keep me posted on availability, pricing and RDS news by email.</label></div>
+<div class="err" id="err"></div>
+<div style="margin-top:20px"><button class="btn" id="submit" type="submit">Send my request</button></div>
+<p class="note" style="margin-top:12px">Meeting point: Unit 16, Prime Park, Montague Gardens, Cape Town (<a href="https://maps.app.goo.gl/Xgf64s13rpLVeiM39?g_st=aw" target="_blank" rel="noopener">map</a>). Your confirmation email will carry the meeting time.</p>
+</div>
+</form>
+<div class="card success" id="done" style="display:none"></div>
+</main>
+<script>
+var CFG=null,riders=[{name:'',bike:'none'}];
+var qs=new URLSearchParams(location.search);
+var ROUTE_IN={1:'peninsula','peninsula':'peninsula',2:'winelands','winelands':'winelands',3:'passes','passes':'passes','help':'help','custom':'custom'};
+var SUB_ID='sub_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function fmtR(n){return 'R'+Number(n).toLocaleString('en-ZA');}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function quote(routeId,bikeIds){var route=null;CFG.routes.forEach(function(r){if(r.id===routeId)route=r;});var n=bikeIds.length,pct=0;CFG.groupDiscount.forEach(function(g){if(n>=g.minRiders&&g.pct>pct)pct=g.pct;});
+  var out=[],tot=0,priceable=!!(route&&route.base);bikeIds.forEach(function(id,i){var bk=null;CFG.bikes.forEach(function(b){if(b.id===id)bk=b;});bk=bk||CFG.bikes[CFG.bikes.length-1];var base=priceable?route.base:null,disc=priceable?Math.round(base*pct/100):null,sup=bk.supplement||0,t=priceable?base-disc+sup:null;if(priceable)tot+=t;out.push({i:i+1,bike:bk,base:base,pct:pct,disc:disc,sup:sup,total:t});});
+  return {route:route,riders:out,groupTotal:priceable?tot:null,priceable:priceable,pct:pct};}
+function renderRiders(){var h='';riders.forEach(function(r,i){h+='<div class="rider"><div class="top"><span>Rider '+(i+1)+(i===0?' (you)':'')+'</span>'+(i>0?'<button type="button" class="link" onclick="rm('+i+')">remove</button>':'')+'</div>'
+  +(i>0?'<label>Rider name *</label><input value="'+esc(r.name)+'" oninput="riders['+i+'].name=this.value">':'')
+  +'<label>Preferred bike</label><select onchange="riders['+i+'].bike=this.value;renderQuote()">'+CFG.bikes.map(function(b){return '<option value="'+b.id+'"'+(b.id===r.bike?' selected':'')+'>'+esc(b.label)+(b.supplement?' (+'+fmtR(b.supplement)+')':'')+'</option>';}).join('')+'</select></div>';});
+  document.getElementById('riders').innerHTML=h;renderQuote();}
+function rm(i){riders.splice(i,1);renderRiders();}
+function renderQuote(){var rid=document.getElementById('route').value;var q=quote(rid,riders.map(function(r){return r.bike;}));var el=document.getElementById('quote');
+  var head=CFG.status==='published'?'<div style="font-weight:600;margin-bottom:8px">Your price</div>':'<div style="margin-bottom:8px"><span class="badge">Proposed pricing</span> <span style="font-size:13px">Andrew confirms the price with your booking. These figures are indicative.</span></div>';
+  if(!q.priceable){el.innerHTML=head+'<div style="font-size:14px">'+(rid==='custom'?'Custom routes are quoted individually.':'Tell us a bit about what you\u2019d like and Andrew will suggest a route and price.')+' Route prices start from '+fmtR(Math.min.apply(null,CFG.routes.filter(function(r){return r.base;}).map(function(r){return r.base;})))+' per rider.</div>';return;}
+  var rows=q.riders.map(function(r){return '<tr><td>Rider '+r.i+' - '+esc(r.bike.label)+(r.pct?' <span style="opacity:.75">('+r.pct+'% group discount)</span>':'')+(r.sup?' <span style="opacity:.75">(+'+fmtR(r.sup)+' bike)</span>':'')+'</td><td>'+fmtR(r.total)+'</td></tr>';}).join('');
+  el.innerHTML=head+'<table>'+rows+'<tr class="tot"><td>Group total - '+esc(q.route.label)+'</td><td>'+fmtR(q.groupTotal)+'</td></tr></table><div class="note" style="color:#cfd6e2;margin-top:8px">Paid by card on arrival. No deposit. Bike supplements are not discounted; pillions and guides don\u2019t count as paying riders.</div>';}
+fetch('/api/day-pricing').then(function(r){return r.json();}).then(function(c){CFG=c;var sel=document.getElementById('route');sel.innerHTML=c.routes.map(function(r){return '<option value="'+r.id+'">'+esc(r.label)+(r.base?' - from '+fmtR(r.base)+' per rider':'')+'</option>';}).join('');
+  var pre=ROUTE_IN[qs.get('route')];if(pre)sel.value=pre;else sel.value='help';sel.onchange=renderQuote;
+  var pb=qs.get('bike');if(pb&&c.bikes.some(function(b){return b.id===pb;}))riders[0].bike=pb;
+  var nr=parseInt(qs.get('riders')||'1',10);while(riders.length<Math.min(nr,8))riders.push({name:'',bike:riders[0].bike});
+  renderRiders();});
+document.getElementById('addRider').onclick=function(){if(riders.length<8){riders.push({name:'',bike:'none'});renderRiders();}};
+document.getElementById('f').onsubmit=function(e){e.preventDefault();var f=e.target,err=document.getElementById('err');err.textContent='';
+  var p={firstName:f.firstName.value.trim(),lastName:f.lastName.value.trim(),email:f.email.value.trim(),phone:f.phone.value.trim(),country:f.country.value.trim(),date:f.date.value,altDates:f.altDates.value.trim(),route:f.route.value,pillion:f.pillion.checked,riders:riders,experience:f.experience.value.trim(),ownBike:f.ownBike.value.trim(),licence:f.licence.checked,licenceNumber:f.licenceNumber.value.trim(),gear:f.gear.value.trim(),medical:f.medical.value.trim(),emergency:f.emergency.value.trim(),notes:f.notes.value.trim(),referral:f.referral.value.trim(),terms:f.terms.checked,consent:f.consent.checked,hp_field:f.hp_field.value,submissionId:SUB_ID};
+  if(!p.firstName||!p.lastName||!p.email||!p.phone||!p.date){err.textContent='Please complete your name, email, phone and date.';return;}
+  for(var i=1;i<riders.length;i++){if(!riders[i].name.trim()){err.textContent='Please give a name for rider '+(i+1)+'.';return;}}
+  if(!p.terms){err.textContent='Please tick the terms box to continue.';return;}
+  var b=document.getElementById('submit');b.disabled=true;b.textContent='Sending…';
+  fetch('/api/submit-day-booking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(function(r){return r.json();}).then(function(j){
+    if(j.success){document.getElementById('f').style.display='none';var d=document.getElementById('done');d.style.display='block';d.innerHTML='<h2>Request received</h2><p>Thanks '+esc(p.firstName)+'. Your reference is <b>'+esc(j.groupRef)+'</b>. Andrew will check the date, bikes and route and email your confirmation with the meeting time. Nothing to pay now.</p>';window.scrollTo(0,0);}
+    else{err.textContent=j.error||'Something went wrong - please email ride@ridedownsouth.com';b.disabled=false;b.textContent='Send my request';}
+  }).catch(function(){err.textContent='Network problem - please try again or email ride@ridedownsouth.com';b.disabled=false;b.textContent='Send my request';});};
+</script></body></html>
