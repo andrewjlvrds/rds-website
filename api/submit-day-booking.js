@@ -126,7 +126,7 @@ module.exports = async function handler(req, res) {
         Communication_Consent: consent, T_s_and_C_s_checked: terms ? "Yes" : "No", Waiver_Signed: false
       };
       if (rq.bikeZoho) rec.Motorcycle_Preference = rq.bikeZoho;
-      if (published && rq.total != null) { rec.Tour_Price = rq.total; rec.day_Ride_Amount = rq.total; }
+      if (published && rq.total != null) rec.Tour_Price = rq.total; // NOT day_Ride_Amount (multi-day add-on, summed into Total_Amount_Due)
       Object.keys(rec).forEach(function (k) { if (rec[k] === undefined || rec[k] === "") delete rec[k]; });
       var cr = await fetch(zoho.ZOHO_API + "/Bookings", { method: "POST", headers: { Authorization: "Zoho-oauthtoken " + token, "Content-Type": "application/json" }, body: JSON.stringify({ data: [rec], trigger: [] }) });
       var cj = await cr.json();
