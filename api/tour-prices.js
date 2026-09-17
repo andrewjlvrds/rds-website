@@ -20,7 +20,7 @@ var TOUR_NAMES = {
   'feast-21': 'Feast of Southern Africa: 21 days',
   'feast-16': 'Feast of Southern Africa: 16 days',
   'edge-21':  'Edge of Africa: 21 days',
-  'bon-14':   'Best of Namibia: 17 days',
+  'bon-14':   'Best of Namibia: 18 days',
   'sst-14':   'Southern Sweep: 14 days',
 };
 
