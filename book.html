@@ -121,6 +121,7 @@
 
   var TOUR_CATEGORIES = [
     {v:'feast', l:'Feast of Southern Africa: Cape Town to Vic Falls'},
+    {v:'feastsouth', l:'Feast of Southern Africa: Vic Falls to Cape Town'},
     {v:'edge21', l:'Edge of Africa: Cape Town to the Kruger Park'},
     {v:'edge14', l:'Edge of Africa: Cape Town to the Kruger Park (14 days, Nov-Dec 2026 only)'},
     {v:'sst', l:'Southern Sweep: Kruger Park to Cape Town'},
@@ -137,6 +138,9 @@
       {v:'feast-21', l:'21 days - Cape Town to Victoria Falls', default:true},
       {v:'feast-16', l:'16 days - Cape Town to Windhoek'}
     ],
+    feastsouth: [
+      {v:'feast-south-21', l:'21 days - Victoria Falls to Cape Town', default:true}
+    ],
     edge21: [
       {v:'edge-21', l:'Edge 21 LWU - Cape Town to the Kruger Park', default:true}
     ],
@@ -151,7 +155,7 @@
     ]
   };
   // Categories that need departure dates, pricing, bike selection
-  var FULL_TOUR = {feast:true, edge21:true, edge14:true, sst:true, bon:true};
+  var FULL_TOUR = {feast:true, feastsouth:true, edge21:true, edge14:true, sst:true, bon:true};
   // Flat 1-Day tour price. Not Zoho-backed (no Tour_Types record for this
   // product) so it's a constant here rather than pulled from /api/tour-prices.
   // Pillions ride free — reflected as a zero pillion line, not omitted, so the

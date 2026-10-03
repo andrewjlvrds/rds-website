@@ -18,6 +18,7 @@ function toZohoDate(s) {
 var TOUR_TYPE_MAP = {
   "Feast of Southern Africa: 21 days": "FoSA 21",
   "Feast of Southern Africa: 16 days": "FoSA 16",
+  "Feast of Southern Africa: Victoria Falls to Cape Town": "FoSA South 21",
   "Feast of Southern Africa: 15 days": "FoSA 16", // legacy label, product renamed 16-day 2026-08-19
   "Edge of Africa: 14 days": "Edge 14",
   "Edge of Africa: 12 days": "Edge 12",
@@ -77,7 +78,7 @@ module.exports = async function handler(req, res) {
     // "one of the other tours" and Custom categories never collect one, so a
     // blanket departureDate requirement rejected every one of those
     // submissions with "Missing required fields" (fixed 2026-08-18).
-    var FULL_TOUR_CATEGORIES = { feast: 1, edge21: 1, edge14: 1, sst: 1, bon: 1 };
+    var FULL_TOUR_CATEGORIES = { feast: 1, feastsouth: 1, edge21: 1, edge14: 1, sst: 1, bon: 1 };
     if (FULL_TOUR_CATEGORIES[body.tourCategory] && !body.departureDate) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -91,6 +92,7 @@ module.exports = async function handler(req, res) {
     // Map tour variant to Zoho Tour_Type
     var VARIANT_TYPE_MAP = {
       "feast-21": "FoSA 21",
+      "feast-south-21": "FoSA South 21",
       "feast-16": "FoSA 21",
       "feast-15": "FoSA 21", // legacy id; 16-day hop-off rides the FoSA 21 departure
       "feast-20": "FoSA 20",
