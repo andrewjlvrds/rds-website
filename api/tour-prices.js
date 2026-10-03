@@ -10,6 +10,7 @@ var zoho = require('./_zoho');
 // Tour_Code (Tour_Types module) -> site tour id used by page widgets.
 var TOUR_CODE_TO_ID = {
   'FoSA 21': 'feast-21',
+  'FoSA South 21': 'feast-south-21',
   'FoSA 16': 'feast-16',
   'Edge 21': 'edge-21',
   'BoN':     'bon-14',
@@ -19,6 +20,7 @@ var TOUR_CODE_TO_ID = {
 var TOUR_NAMES = {
   'feast-21': 'Feast of Southern Africa: 21 days',
   'feast-16': 'Feast of Southern Africa: 16 days',
+  'feast-south-21': 'Feast of Southern Africa: Victoria Falls to Cape Town',
   'edge-21':  'Edge of Africa: 21 days',
   'bon-14':   'Best of Namibia: 18 days',
   'sst-14':   'Southern Sweep: 14 days',

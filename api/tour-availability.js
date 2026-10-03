@@ -8,6 +8,7 @@ var TOUR_TYPE_TO_ID = {
   'FoSA 20': 'feast-20',
   'FoSA 21': 'feast-21',
   'FoSA 16': 'feast-16',
+  'FoSA South 21': 'feast-south-21',
   'Edge 14':  'edge-14',
   'Edge 12':  'edge-12',
   'Edge 21':  'edge-21',
@@ -23,6 +24,7 @@ var TOUR_NAMES = {
   'feast-20':      'Feast of Southern Africa: 20 days',
   'feast-21':      'Feast of Southern Africa: 21 days',
   'feast-16':      'Feast of Southern Africa: 16 days',
+  'feast-south-21': 'Feast of Southern Africa: Victoria Falls to Cape Town',
   'edge-14':       'Edge of Africa: 14 days',
   'edge-12':       'Edge of Africa: 12 days',
   'edge-21':       'Edge of Africa: 21 days',
@@ -95,6 +97,7 @@ var cache = {
 // figures are only a fallback when Tour_Types has no set for that year.
 var TYPE_CODE_TO_ID = {
   'FoSA 21': 'feast-21',
+  'FoSA South 21': 'feast-south-21',
   'FoSA 16': 'feast-16',
   'Edge 21': 'edge-21',
   'BoN':     'bon-14',
