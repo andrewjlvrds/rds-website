@@ -125,6 +125,7 @@
     {v:'edge21', l:'Edge of Africa: Cape Town to the Kruger Park (21 days)'},
     {v:'edge14', l:'Edge of Africa: Cape Town to the Kruger Park (14 days)'},
     {v:'sst', l:'Southern Sweep: Kruger Park to Cape Town'},
+    {v:'coc', l:'Cream of the Cape: Cape Town loop (10 days)'},
     {v:'bon', l:'Best of Namibia'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
     {v:'other', l:'One of the other tours I\u2019ve seen'},
@@ -150,12 +151,16 @@
     sst: [
       {v:'sst-14', l:'Southern Sweep - Kruger Park to Cape Town', default:true}
     ],
+    // Cream of the Cape (Andrew 8 Oct 2026). tour_id wc-10 = Tours.Tour_Type "CoC 10".
+    coc: [
+      {v:'wc-10', l:'10 days - Cape Town loop', default:true}
+    ],
     bon: [
       {v:'bon-14', l:'15 days - Windhoek loop', default:true}
     ]
   };
   // Categories that need departure dates, pricing, bike selection
-  var FULL_TOUR = {feast:true, feastsouth:true, edge21:true, edge14:true, sst:true, bon:true};
+  var FULL_TOUR = {feast:true, feastsouth:true, edge21:true, edge14:true, sst:true, coc:true, bon:true};
   // Flat 1-Day tour price. Not Zoho-backed (no Tour_Types record for this
   // product) so it's a constant here rather than pulled from /api/tour-prices.
   // Pillions ride free — reflected as a zero pillion line, not omitted, so the
@@ -557,7 +562,7 @@
       if (dep) {
         var p = getPricing();
         h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
-        h += '<div class="price-row"><span>Rider (base price)</span><span class="price-val">' + fmt(p.base) + '</span></div>';
+        h += '<div class="price-row"><span>Rider, single room (base price)</span><span class="price-val">' + fmt(p.base) + '</span></div>';
         if (p.upgrade > 0) h += '<div class="price-row"><span>Motorcycle upgrade</span><span class="price-val">+ ' + fmt(p.upgrade) + '</span></div>';
         if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
         if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';

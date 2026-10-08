@@ -29,6 +29,7 @@ var TOUR_TYPE_MAP = {
   "Best of Namibia: 14 days": "BoN", // legacy: pre-rename form submissions
   "Best of Namibia: 13 days": "BoN", // legacy: pre-rename form submissions
   "Southern Sweep: 14 days": "SST 14",
+  "Cream of the Cape: 10 days": "CoC 10",
   "Great Lakes & Rift Valley: 24 days": "GL 24",
   "Great Lakes & Rift Valley: 14 days": "GL 14",
 };
@@ -78,7 +79,7 @@ module.exports = async function handler(req, res) {
     // "one of the other tours" and Custom categories never collect one, so a
     // blanket departureDate requirement rejected every one of those
     // submissions with "Missing required fields" (fixed 2026-08-18).
-    var FULL_TOUR_CATEGORIES = { feast: 1, feastsouth: 1, edge21: 1, edge14: 1, sst: 1, bon: 1 };
+    var FULL_TOUR_CATEGORIES = { feast: 1, feastsouth: 1, edge21: 1, edge14: 1, sst: 1, coc: 1, bon: 1 };
     if (FULL_TOUR_CATEGORIES[body.tourCategory] && !body.departureDate) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -99,6 +100,7 @@ module.exports = async function handler(req, res) {
       "edge-21": "Edge 21",
       "edge-14": "Edge 14",
       "sst-14": "SST 14",
+      "wc-10": "CoC 10",
       "edge-13": "Edge 13 SWD",   // legacy: pre-rename form submissions
       "edge-12": "Edge 12",
       "bon-14": "BoN",
