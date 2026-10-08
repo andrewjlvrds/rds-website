@@ -18,6 +18,7 @@ var TOUR_TYPE_TO_ID = {
   'GL':       'greatlakes-24',
   'GL 14':    'greatlakes-14',
   'SST 14':   'sst-14',
+  'CoC 10':   'wc-10',   // Cream of the Cape (8 Oct 2026); pages use tour id wc-10
 };
 
 var TOUR_NAMES = {
@@ -33,6 +34,7 @@ var TOUR_NAMES = {
   'greatlakes-24': 'Great Lakes & Rift Valley: 24 days',
   'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
   'sst-14':        'Southern Sweep: 14 days',
+  'wc-10':         'Cream of the Cape: 10 days',
 };
 
 var AVAILABLE_STATUSES = ['Available', 'Confirmed'];
@@ -102,6 +104,7 @@ var TYPE_CODE_TO_ID = {
   'Edge 21': 'edge-21',
   'BoN':     'bon-14',
   'SST 14':  'sst-14',
+  'CoC 10':  'wc-10',
 };
 var TYPE_FIELDS = 'Tour_Code,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28';
 
