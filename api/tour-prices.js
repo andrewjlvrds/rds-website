@@ -17,6 +17,7 @@ var TOUR_CODE_TO_ID = {
   'EoA 12':  'edge-12',   // Edge of Africa hop-off, Cape Town to Addo (7 Oct 2026)
   'BoN':     'bon-14',
   'SST 14':  'sst-14',
+  'CoC 10':  'wc-10',     // Cream of the Cape, 10-day Cape Town loop (8 Oct 2026); pages use tour id wc-10
 };
 
 var TOUR_NAMES = {
@@ -28,6 +29,7 @@ var TOUR_NAMES = {
   'edge-12':  'Edge of Africa: 12 days',
   'bon-14':   'Best of Namibia: 18 days',
   'sst-14':   'Southern Sweep: 14 days',
+  'wc-10':    'Cream of the Cape: 10 days',
 };
 
 var FETCH_FIELDS = 'Tour_Code,Name,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28';
