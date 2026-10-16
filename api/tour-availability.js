@@ -49,7 +49,7 @@ var FETCH_FIELDS = 'Name,Status,Tour_Type,Departure_Date,End_Date,Max_Guests,Rid
 // per year only, so this is a per-departure override applied on top of it.
 // Pillion left at the existing R96,000 (no new figure supplied).
 // Shared discount is negative here: the booking form ADDS this field to the total.
-var EDGE21_STEP_FROM = '2027-10-01';
+var EDGE21_STEP_FROM = '2028-01-01';
 var EDGE21_STEP = {
   base_price:             '205000',
   pillion:                '96000',
@@ -259,7 +259,7 @@ module.exports = async function handler(req, res) {
         bike_upgrade_crf1100:   tp ? tp.bike_upgrade_crf1100   : String(n(t.Upgrade_CRF1100)),
         bike_upgrade_bmw1250gs: tp ? tp.bike_upgrade_bmw1250gs : String(n(t.Upgrade_BMW)),
         bike_upgrade_bmw1300gs: tp ? (tp.bike_upgrade_bmw1300gs || '0') : '0',
-        price_source:           step ? 'edge21_step_from_2027-10' : (tp ? 'tour_types_' + depYear : 'tours_record'),
+        price_source:           step ? 'edge21_step_from_2028-01' : (tp ? 'tour_types_' + depYear : 'tours_record'),
       });
     }
 
