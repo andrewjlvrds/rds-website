@@ -30,6 +30,7 @@ var TOUR_TYPE_MAP = {
   "Best of Namibia: 13 days": "BoN", // legacy: pre-rename form submissions
   "Southern Sweep: 14 days": "SST 14",
   "Cream of the Cape: 10 days": "CoC 10",
+  "Best of the Western Cape: 10 days": "CoC 10",
   "Great Lakes & Rift Valley: 24 days": "GL 24",
   "Great Lakes & Rift Valley: 14 days": "GL 14",
 };

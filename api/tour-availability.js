@@ -18,7 +18,7 @@ var TOUR_TYPE_TO_ID = {
   'GL':       'greatlakes-24',
   'GL 14':    'greatlakes-14',
   'SST 14':   'sst-14',
-  'CoC 10':   'wc-10',   // Cream of the Cape (8 Oct 2026); pages use tour id wc-10
+  'CoC 10':   'wc-10',   // Best of the Western Cape (was Cream of the Cape, renamed 16 Oct 2026); pages use tour id wc-10
 };
 
 var TOUR_NAMES = {
@@ -34,7 +34,7 @@ var TOUR_NAMES = {
   'greatlakes-24': 'Great Lakes & Rift Valley: 24 days',
   'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
   'sst-14':        'Southern Sweep: 14 days',
-  'wc-10':         'Cream of the Cape: 10 days',
+  'wc-10':         'Best of the Western Cape: 10 days',
 };
 
 var AVAILABLE_STATUSES = ['Available', 'Confirmed'];
