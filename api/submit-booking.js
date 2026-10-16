@@ -41,6 +41,7 @@ var BIKE_MAP = {
   "nx500": "Honda NX500",
   "crf1100": "Honda Africa Twin CRF1100",
   "bmw1250gs": "BMW 1250GS",
+  "bmw1300gs": "BMW R1300GS",
   "own": "Own Bike",
 };
 
@@ -129,7 +130,9 @@ module.exports = async function handler(req, res) {
     // ── 2. Build the Booking record ──
     var bikeKey = body.bike || "";
     var isUpgradeCRF = bikeKey === "crf1100";
-    var isUpgradeBMW = bikeKey === "bmw1250gs";
+    // R1300GS shares the BMW upgrade fields (no separate Zoho amount field): same
+    // convention as existing R1300GS bookings (Motorcycle_Upgrade_BMW_1250GS + BMW1250_Upgrade Yes).
+    var isUpgradeBMW = bikeKey === "bmw1250gs" || bikeKey === "bmw1300gs";
     var hasRoommate = body.sharedRoomName && body.sharedRoomName.trim() !== "";
     var hasPillion = body.addPillion === "Yes";
 
@@ -176,7 +179,7 @@ module.exports = async function handler(req, res) {
       // Pricing
       Tour_Price: parseFloat(body.basePrice) || 0,
       Shared_Room_Discount: Math.abs(parseFloat(body.sharedRoomDiscount) || 0),
-      Bike_Upgrade_Notes: isUpgradeCRF ? "CRF1100" : (isUpgradeBMW ? "BMW 1250GS" : ""),
+      Bike_Upgrade_Notes: isUpgradeCRF ? "CRF1100" : (isUpgradeBMW ? (bikeKey === "bmw1300gs" ? "BMW R1300GS" : "BMW 1250GS") : ""),
       Pillion1: parseFloat(body.pillionAmount) || 0,
 
       // Riding experience

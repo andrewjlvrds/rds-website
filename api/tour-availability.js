@@ -42,6 +42,23 @@ var WAITLIST_STATUSES  = ['Waitlist'];
 
 var FETCH_FIELDS = 'Name,Status,Tour_Type,Departure_Date,End_Date,Max_Guests,Riders,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_BMW,Shared_Room_Discount';
 
+// EDGE 21 PRICE STEP (Andrew, 16 Oct 2026): Edge of Africa 21 departures from
+// 1 Oct 2027 onward are priced R205,000, shared room -R15,000, BMW R1250GS
+// +R24,000, BMW R1300GS +R27,000, Honda CRF1100 +R18,000. Earlier departures
+// (Edge Jan 27) keep the Tour_Types 2027 figures (R190,000). Tour_Types prices
+// per year only, so this is a per-departure override applied on top of it.
+// Pillion left at the existing R96,000 (no new figure supplied).
+// Shared discount is negative here: the booking form ADDS this field to the total.
+var EDGE21_STEP_FROM = '2027-10-01';
+var EDGE21_STEP = {
+  base_price:             '205000',
+  pillion:                '96000',
+  shared_room_discount:   '-15000',
+  bike_upgrade_crf1100:   '18000',
+  bike_upgrade_bmw1250gs: '24000',
+  bike_upgrade_bmw1300gs: '27000',
+};
+
 // SEATS TAKEN (Andrew, 3 Oct 2026). A seat is taken by a Booking on the tour
 // with Participant_Type "Rider" and one of the statuses below. Cancelled
 // bookings, pillions and Provisional holds do not take a public seat.
@@ -226,6 +243,8 @@ module.exports = async function handler(req, res) {
 
       var depYear = String(t.Departure_Date).slice(0, 4);
       var tp = (typePrices[tourId] || {})[depYear] || null;
+      var step = (tourId === 'edge-21' && t.Departure_Date >= EDGE21_STEP_FROM) ? EDGE21_STEP : null;
+      if (step) tp = step;
 
       departures.push({
         tour_id:                tourId,
@@ -239,7 +258,8 @@ module.exports = async function handler(req, res) {
         shared_room_discount:   tp ? tp.shared_room_discount   : String(n(t.Shared_Room_Discount)),
         bike_upgrade_crf1100:   tp ? tp.bike_upgrade_crf1100   : String(n(t.Upgrade_CRF1100)),
         bike_upgrade_bmw1250gs: tp ? tp.bike_upgrade_bmw1250gs : String(n(t.Upgrade_BMW)),
-        price_source:           tp ? 'tour_types_' + depYear    : 'tours_record',
+        bike_upgrade_bmw1300gs: tp ? (tp.bike_upgrade_bmw1300gs || '0') : '0',
+        price_source:           step ? 'edge21_step_from_2027-10' : (tp ? 'tour_types_' + depYear : 'tours_record'),
       });
     }
 
