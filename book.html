@@ -396,7 +396,7 @@
     h += '<select id="' + id + '">';
     for (var i = 0; i < opts.length; i++) {
       var sel = opts[i].v === val ? ' selected' : '';
-      h += '<option value="' + opts[i].v + '"' + sel + '>' + opts[i].l + '</option>';
+      h += '<option value="' + opts[i].v + '"' + sel + (opts[i].d ? ' disabled' : '') + '>' + opts[i].l + '</option>';
     }
     h += '</select>';
     return h;
@@ -480,7 +480,9 @@
         var endD = endDateFor(deps[i]);
         if (endD) lbl += ' \u2014 ' + fmtDate(endD);
         if (deps[i].tour_status.toLowerCase() === 'waitlist') lbl += ' (Waitlist)';
-        dateOpts.push({v:deps[i].departure_date, l:lbl});
+        var soldOut = deps[i].tour_status.toLowerCase() !== 'waitlist' && parseInt(deps[i].places_available, 10) <= 0;
+        if (soldOut) lbl += ' (Sold out)';
+        dateOpts.push({v:deps[i].departure_date, l:lbl, d:soldOut});
       }
       h += '<div style="margin-top:20px">' + selectHtml('departureDate','Departure Date',true,dateOpts,form.departureDate) + '</div>';
 
