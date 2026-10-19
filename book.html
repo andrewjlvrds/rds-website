@@ -342,7 +342,11 @@
     if (form.bike === 'bmw1250gs') upgrade = parsePrice(src.bike_upgrade_bmw1250gs);
     if (form.bike === 'bmw1300gs') upgrade = parsePrice(src.bike_upgrade_bmw1300gs);
     var pillion = (form.addPillion === 'Yes') ? parsePrice(src.pillion) : 0;
-    var shared = (form.roomType !== 'Single') ? parsePrice(src.shared_room_discount) : 0;
+    // Shared room is always a deduction. The availability feed sends Tour_Types
+    // discounts positive ('15000') but the Edge 21 2028 override negative ('-15000');
+    // adding the raw value inflated the total by 2x the discount (Garth Steggles,
+    // 19 Oct 2026: R238,000 shown instead of R208,000). Normalise the sign here.
+    var shared = (form.roomType !== 'Single') ? -Math.abs(parsePrice(src.shared_room_discount)) : 0;
     return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
   }
 
