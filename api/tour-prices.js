@@ -16,7 +16,7 @@ var TOUR_CODE_TO_ID = {
   'EoA 10':  'edge-10',   // Edge of Africa hop-off, Cape Town to Jeffreys Bay (7 Oct 2026)
   'EoA 12':  'edge-12',   // Edge of Africa hop-off, Cape Town to Addo (7 Oct 2026)
   'BoN':     'bon-14',
-  'BoN 10':  'bon-10',    // Best of Namibia 10-day Windhoek loop (Andrew 26 Oct 2026)
+  'BoN 12':  'bon-12',    // Best of Namibia 12-day Windhoek loop (Andrew 26 Oct 2026; was BoN 10 earlier that day)
   'SST 14':  'sst-14',
   'CoC 10':  'wc-10',     // Best of the Western Cape (renamed from Cream of the Cape 16 Oct 2026), 10-day Cape Town loop (8 Oct 2026); pages use tour id wc-10
 };
@@ -29,7 +29,7 @@ var TOUR_NAMES = {
   'edge-10':  'Edge of Africa: 10 days',
   'edge-12':  'Edge of Africa: 12 days',
   'bon-14':   'Best of Namibia: 18 days',
-  'bon-10':   'Best of Namibia: 10 days',
+  'bon-12':   'Best of Namibia: 12 days',
   'sst-14':   'Southern Sweep: 14 days',
   'wc-10':    'Best of the Western Cape: 10 days',
 };

@@ -24,7 +24,7 @@ var TOUR_TYPE_MAP = {
   "Edge of Africa: 12 days": "Edge 12",
   "Best of Namibia": "BoN",
   "Best of Namibia: 18 days": "BoN",
-  "Best of Namibia: 10 days": "BoN 10", // 10-day Windhoek loop (Andrew 26 Oct 2026)
+  "Best of Namibia: 12 days": "BoN 12", // 12-day Windhoek loop (Andrew 26 Oct 2026)
   "Best of Namibia: 17 days": "BoN", // legacy: 17-day form submissions (Aug-Sep 2026)
   "Best of Namibia: 15 days": "BoN", // legacy: pre-17-day form submissions
   "Best of Namibia: 14 days": "BoN", // legacy: pre-rename form submissions
@@ -107,7 +107,7 @@ module.exports = async function handler(req, res) {
       "edge-13": "Edge 13 SWD",   // legacy: pre-rename form submissions
       "edge-12": "Edge 12",
       "bon-14": "BoN",
-      "bon-10": "BoN 10",
+      "bon-12": "BoN 12",
       "bon-13": "BoN"  // legacy: pre-rename form submissions
     };
     var tourType = VARIANT_TYPE_MAP[body.tourVariant] || TOUR_TYPE_MAP[body.tour] || "";
