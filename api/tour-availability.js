@@ -15,7 +15,7 @@ var TOUR_TYPE_TO_ID = {
   'Edge 21 LWU': 'edge-21',
   'Edge 13 SWD': 'edge-13',
   'BoN':      'bon-14',
-  'BoN 12':   'bon-12',  // Best of Namibia 12-day Windhoek loop (Andrew 26 Oct 2026; was BoN 10 earlier that day)
+  'DDN 12':   'ddn-12',  // Desert and Dunes of Namibia, 12 days from Windhoek (Andrew 26 Oct 2026)
   'GL':       'greatlakes-24',
   'GL 14':    'greatlakes-14',
   'SST 14':   'sst-14',
@@ -32,7 +32,7 @@ var TOUR_NAMES = {
   'edge-21':       'Edge of Africa: 21 days',
   'edge-13':       'Edge of Africa: 13 days',
   'bon-14':        'Best of Namibia',
-  'bon-12':        'Best of Namibia: 12 days',
+  'ddn-12':        'Desert and Dunes of Namibia',
   'greatlakes-24': 'Great Lakes & Rift Valley: 24 days',
   'greatlakes-14': 'Great Lakes & Rift Valley: 14 days',
   'sst-14':        'Southern Sweep: 14 days',
@@ -122,7 +122,7 @@ var TYPE_CODE_TO_ID = {
   'FoSA 16': 'feast-16',
   'Edge 21': 'edge-21',
   'BoN':     'bon-14',
-  'BoN 12':  'bon-12',
+  'DDN 12':  'ddn-12',
   'SST 14':  'sst-14',
   'CoC 10':  'wc-10',
 };

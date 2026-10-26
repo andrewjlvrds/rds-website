@@ -127,6 +127,7 @@
     {v:'sst', l:'Southern Sweep: Kruger Park to Cape Town'},
     {v:'coc', l:'Best of the Western Cape: Cape Town loop (10 days)'},
     {v:'bon', l:'Best of Namibia'},
+    {v:'ddn', l:'Desert and Dunes of Namibia'},
     {v:'oneday', l:'1-Day Tour from Cape Town'},
     {v:'other', l:'One of the other tours I\u2019ve seen'},
     {v:'custom', l:'Custom Tour'}
@@ -156,12 +157,15 @@
       {v:'wc-10', l:'10 days - Cape Town loop', default:true}
     ],
     bon: [
-      {v:'bon-14', l:'18 days - from Windhoek', default:true},
-      {v:'bon-12', l:'12 days - from Windhoek'}
+      {v:'bon-14', l:'18 days - from Windhoek', default:true}
+    ],
+    // Desert and Dunes of Namibia (Andrew 26 Oct 2026). tour_id ddn-12 = Tours.Tour_Type "DDN 12".
+    ddn: [
+      {v:'ddn-12', l:'12 days - from Windhoek', default:true}
     ]
   };
   // Categories that need departure dates, pricing, bike selection
-  var FULL_TOUR = {feast:true, feastsouth:true, edge21:true, edge14:true, sst:true, coc:true, bon:true};
+  var FULL_TOUR = {feast:true, feastsouth:true, edge21:true, edge14:true, sst:true, coc:true, bon:true, ddn:true};
   // Flat 1-Day tour price. Not Zoho-backed (no Tour_Types record for this
   // product) so it's a constant here rather than pulled from /api/tour-prices.
   // Pillions ride free — reflected as a zero pillion line, not omitted, so the
