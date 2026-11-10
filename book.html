@@ -171,6 +171,12 @@
   // Pillions ride free — reflected as a zero pillion line, not omitted, so the
   // cost summary states it rather than leaving a silent gap.
   var ONEDAY_PRICE = 8500;
+  // Passenger booking on their own (Andrew 10 Nov 2026): a pillion or support car
+  // passenger pays the pillion price, own room included (no single-room extra), with
+  // no motorcycle, no add-a-pillion question and no riding-experience questions.
+  function isPassenger() {
+    return form.participantType === 'Pillion' || form.participantType === 'Support Car Passenger';
+  }
 
   var COUNTRIES = ['Australia','Austria','Belgium','Canada','Denmark','Finland','France','Germany','Republic of Ireland','Italy','Netherlands','New Zealand','Norway','South Africa','Spain','Sweden','Switzerland','UK and Northern Ireland','USA','Other'];
   var BIKES_STD = [
@@ -341,6 +347,10 @@
     var dep = getSelDep();
     if (!dep) return { base:0, upgrade:0, pillion:0, shared:0, total:0 };
     var src = priceSource(dep);
+    if (isPassenger()) {
+      var pass = parsePrice(src.pillion);
+      return { base:pass, upgrade:0, pillion:0, shared:0, total:pass };
+    }
     var base = parsePrice(src.base_price);
     var upgrade = 0;
     if (form.bike === 'crf1100') upgrade = parsePrice(src.bike_upgrade_crf1100);
@@ -537,10 +547,11 @@
         h += inputHtml('roommateName','Name of the person you\u2019re sharing with',true,'text',form.roommateName,'Their full name');
       }
 
+      var dep = getSelDep();
+      if (!isPassenger()) {
       h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
 
       // Motorcycle preference
-      var dep = getSelDep();
       h += '<div style="margin-top:24px"><label class="field-label">Motorcycle Preference<span class="req">*</span></label>';
       h += '<p class="helper">Standard options included in the tour price. Upgrades available where shown.</p>';
       h += '<div class="radio-group" id="bikeGroup">';
@@ -570,12 +581,13 @@
       }
 
       h += '</div></div>';
+      }
 
       // Pricing card
       if (dep) {
         var p = getPricing();
         h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
-        h += '<div class="price-row"><span>Rider, single room (base price)</span><span class="price-val">' + fmt(p.base) + '</span></div>';
+        h += '<div class="price-row"><span>' + (isPassenger() ? (form.participantType === 'Pillion' ? 'Pillion' : 'Support car passenger') + ', own room' : 'Rider, single room (base price)') + '</span><span class="price-val">' + fmt(p.base) + '</span></div>';
         if (p.upgrade > 0) h += '<div class="price-row"><span>Motorcycle upgrade</span><span class="price-val">+ ' + fmt(p.upgrade) + '</span></div>';
         if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
         if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';
@@ -588,13 +600,15 @@
       }
     }
 
-    h += '<div class="btns"><button class="btn-s" id="btnBack2">Back</button><button class="btn-p" id="btnNext2">Next: Riding Experience</button></div>';
+    h += '<div class="btns"><button class="btn-s" id="btnBack2">Back</button><button class="btn-p" id="btnNext2">' + (isPassenger() ? 'Next: About You' : 'Next: Riding Experience') + '</button></div>';
     return h;
   }
 
   // ── Step 3 ──
   function renderStep3() {
-    var h = '<h2>Your Riding Experience</h2>';
+    var passenger = isPassenger();
+    var h = passenger ? '<h2>A Bit About You</h2>' : '<h2>Your Riding Experience</h2>';
+    if (!passenger) {
     h += '<p class="sub">We ride 280\u2013320km a day on tar and gravel roads. You\u2019ll need to be comfortable on large capacity motorcycles (500cc+). Please answer as accurately as you can.</p>';
 
     var yearOpts = [{v:'',l:'Select'}];
@@ -613,6 +627,7 @@
     h += '<div class="checkbox' + (form.licence ? ' on' : '') + '">' + (form.licence ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') + '</div>';
     h += '<span class="check-text">I have a licence to ride a motorcycle over 125cc <span class="req">*</span></span>';
     h += '</div></div>';
+    }
 
     h += textareaHtml('medical','Any physical limitations or medical conditions we should know about?',false,form.medical,'Optional');
     h += textareaHtml('anythingElse','Anything else you\u2019d like us to know?',false,form.anythingElse,'Optional');
@@ -655,6 +670,7 @@
     if (form.tourCategory === 'oneday' && form.departureDate) {
       h += '<div class="sum-row"><span class="sum-lbl">Preferred Date</span><span>' + fmtDate(form.departureDate) + '</span></div>';
     }
+    if (isFull && isPassenger()) h += '<div class="sum-row"><span class="sum-lbl">Joining as</span><span>' + escHtml(form.participantType) + '</span></div>';
     if (isFull && form.bike) {
       var allBikes = BIKES_STD.concat(BIKES_UP);
       var bikeName = form.bike;
@@ -709,8 +725,10 @@
         if (!form.tourVariant) e.push('tourVariant');
         if (!form.departureDate) e.push('departureDate');
         if (!form.participantType) e.push('participantType');
-        if (!form.addPillion) e.push('addPillion');
-        if (!form.bike) e.push('bike');
+        if (!isPassenger()) {
+          if (!form.addPillion) e.push('addPillion');
+          if (!form.bike) e.push('bike');
+        }
         if (form.roomType !== 'Single' && !form.roommateName.trim()) e.push('roommateName');
       }
       if ((form.tourCategory === 'custom' || form.tourCategory === 'oneday' || form.tourCategory === 'other') && !form.customDescription.trim()) e.push('customDescription');
@@ -720,12 +738,14 @@
       }
     }
     if (s >= 3) {
-      if (!form.yearsRiding) e.push('yearsRiding');
-      if (!form.bikeExperience.trim()) e.push('bikeExperience');
-      if (!form.previousTours.trim()) e.push('previousTours');
-      if (!form.onroad) e.push('onroad');
-      if (!form.offroad) e.push('offroad');
-      if (!form.licence) e.push('licence');
+      if (!isPassenger()) {
+        if (!form.yearsRiding) e.push('yearsRiding');
+        if (!form.bikeExperience.trim()) e.push('bikeExperience');
+        if (!form.previousTours.trim()) e.push('previousTours');
+        if (!form.onroad) e.push('onroad');
+        if (!form.offroad) e.push('offroad');
+        if (!form.licence) e.push('licence');
+      }
       if (!form.referral) e.push('referral');
       if (!form.terms) e.push('terms');
     }
@@ -781,6 +801,7 @@
           form.bike = '';
         } else {
           form[name] = val;
+          if (name === 'participantType' && isPassenger()) { form.bike = ''; form.addPillion = ''; }
         }
         render();
       });
