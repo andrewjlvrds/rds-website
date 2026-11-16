@@ -51,6 +51,13 @@ var FETCH_FIELDS = 'Name,Status,Tour_Type,Departure_Date,End_Date,Max_Guests,Rid
 // per year only, so this is a per-departure override applied on top of it.
 // Pillion left at the existing R96,000 (no new figure supplied).
 // Shared discount is negative here: the booking form ADDS this field to the total.
+// LAST-MINUTE OFFER (Andrew, 12 Nov 2026): Edge of Africa 21 departure 14 Jan 2027
+// is 20% off the rider price and the pillion price only. Computed from the
+// Tour_Types 2027 figures, never typed. Upgrades and extras stay full price.
+var DEPARTURE_OFFERS = {
+  'edge-21|2027-01-14': { percent: 20, label: 'January offer: 20% off' }
+};
+
 var EDGE21_STEP_FROM = '2028-01-01';
 var EDGE21_STEP = {
   base_price:             '205000',
@@ -126,7 +133,7 @@ var TYPE_CODE_TO_ID = {
   'SST 14':  'sst-14',
   'CoC 10':  'wc-10',
 };
-var TYPE_FIELDS = 'Tour_Code,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28';
+var TYPE_FIELDS = 'Tour_Code,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28,Price_Adventure_Track_27,Price_Adventure_Track_28,Upgrade_BMW_R1300GS,Upgrade_BMW_R1300GS1';
 
 function n(v) { return Math.round(parseFloat(v || 0)); }
 
@@ -148,6 +155,10 @@ async function loadTypePrices(token) {
           shared_room_discount:   String(n(t['Shared_Room_Discount_' + yy])),
           bike_upgrade_crf1100:   String(n(t['Upgrade_CRF1100_' + yy])),
           bike_upgrade_bmw1250gs: String(n(t['Upgrade_BMW_R1250GS_' + yy])),
+          // R1300GS: Tour_Types api names are Upgrade_BMW_R1300GS (27) and
+          // Upgrade_BMW_R1300GS1 (28, sic), confirmed from Zoho field metadata 16 Nov 2026.
+          bike_upgrade_bmw1300gs: String(n(t[yy === '27' ? 'Upgrade_BMW_R1300GS' : 'Upgrade_BMW_R1300GS1'])),
+          adventure_track_price:  String(n(t['Price_Adventure_Track_' + yy])),
         };
       });
     }
@@ -247,7 +258,17 @@ module.exports = async function handler(req, res) {
       var depYear = String(t.Departure_Date).slice(0, 4);
       var tp = (typePrices[tourId] || {})[depYear] || null;
       var step = (tourId === 'edge-21' && t.Departure_Date >= EDGE21_STEP_FROM) ? EDGE21_STEP : null;
+      // Adventure Track price always comes from Tour_Types for the departure year,
+      // even where the Edge 21 step overrides the other figures (Edge 21 only).
+      var trackPrice = (tourId === 'edge-21' && tp) ? (tp.adventure_track_price || '0') : null;
       if (step) tp = step;
+      var offer = DEPARTURE_OFFERS[tourId + '|' + t.Departure_Date] || null;
+      var basePrice = tp ? tp.base_price : String(n(t.Price_Rider));
+      var pillionPrice = tp ? tp.pillion : String(n(t.Price_Pillion));
+      if (offer && tp) {
+        basePrice = String(Math.round(n(basePrice) * (100 - offer.percent) / 100));
+        pillionPrice = String(Math.round(n(pillionPrice) * (100 - offer.percent) / 100));
+      } else { offer = null; }
 
       departures.push({
         tour_id:                tourId,
@@ -256,12 +277,15 @@ module.exports = async function handler(req, res) {
         tour_end_date:          zohoDateToDisplay(t.End_Date),
         tour_status:            isWaitlist ? 'Waitlist' : 'Available',
         places_available:       String(placesAvail),
-        base_price:             tp ? tp.base_price             : String(n(t.Price_Rider)),
-        pillion:                tp ? tp.pillion                : String(n(t.Price_Pillion)),
+        base_price:             basePrice,
+        pillion:                pillionPrice,
         shared_room_discount:   tp ? tp.shared_room_discount   : String(n(t.Shared_Room_Discount)),
         bike_upgrade_crf1100:   tp ? tp.bike_upgrade_crf1100   : String(n(t.Upgrade_CRF1100)),
         bike_upgrade_bmw1250gs: tp ? tp.bike_upgrade_bmw1250gs : String(n(t.Upgrade_BMW)),
-        bike_upgrade_bmw1300gs: tp ? (tp.bike_upgrade_bmw1300gs || '0') : '0',
+        bike_upgrade_bmw1300gs: (tp && tourId === 'edge-21') ? (tp.bike_upgrade_bmw1300gs || '0') : '0',
+        adventure_track_price:  trackPrice,
+        offer_label:            offer ? offer.label : '',
+        offer_percent:          offer ? offer.percent : 0,
         price_source:           step ? 'edge21_step_from_2028-01' : (tp ? 'tour_types_' + depYear : 'tours_record'),
       });
     }

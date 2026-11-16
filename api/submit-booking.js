@@ -141,6 +141,18 @@ module.exports = async function handler(req, res) {
 
     var overflow = [];
 
+    // Edge 21 Adventure Track + departure offers: no Bookings field exists for these,
+    // so they are written to Booking_Notes, and the track price is added into
+    // Tour_Price so the stored total matches the total the form showed.
+    var trackPrice = parseFloat(body.trackPrice) || 0;
+    var hasTrack = body.track === "adventure" && trackPrice > 0;
+    var extraNotes = [];
+    if (hasTrack) {
+      extraNotes.push("Adventure Track selected (+ZAR " + trackPrice + ", premium bike included; Tour_Price includes the track price)");
+    }
+    if (body.offerLabel) extraNotes.push(String(body.offerLabel).substring(0, 80) + " applied to rider/pillion price");
+    var notesText = [String(body.customDescription || "").trim()].concat(extraNotes).filter(function (x) { return x; }).join("\n");
+
     var bookingName = (body.firstName || "").trim() + " " + (body.lastName || "").trim();
     // Add tour short code and date to make it unique
     var shortTour = tourType || body.tour.substring(0, 10);
@@ -162,7 +174,7 @@ module.exports = async function handler(req, res) {
       Which_Tour: capText(overflow, "Which tour", body.tour),
       Tour_Name: body.tour || "",
       // Free-text intent from 1-Day / "other tours" / Custom rows (empty for full tours)
-      Booking_Notes: capText(overflow, "What they asked for", body.customDescription),
+      Booking_Notes: capText(overflow, "What they asked for", notesText),
       Departure_Dates: body.departureDate || "",
       Tour_start_date: toZohoDate(body.departureDate),
       Tour_end_date: toZohoDate(body.tourEndDate),
@@ -180,7 +192,7 @@ module.exports = async function handler(req, res) {
       BMW1250_Upgrade: isUpgradeBMW ? "Yes" : "No",
 
       // Pricing
-      Tour_Price: parseFloat(body.basePrice) || 0,
+      Tour_Price: (parseFloat(body.basePrice) || 0) + (hasTrack ? trackPrice : 0),
       Shared_Room_Discount: Math.abs(parseFloat(body.sharedRoomDiscount) || 0),
       Bike_Upgrade_Notes: isUpgradeCRF ? "CRF1100" : (isUpgradeBMW ? (bikeKey === "bmw1300gs" ? "BMW R1300GS" : "BMW 1250GS") : ""),
       Pillion1: parseFloat(body.pillionAmount) || 0,

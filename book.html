@@ -112,7 +112,7 @@
   var form = {
     firstName:'', lastName:'', email:'', phone:'', country:'',
     tourCategory:'', tourVariant:'', departureDate:'', customDescription:'',
-    participantType:'', roomType:'Single', roommateName:'', addPillion:'', bike:'',
+    participantType:'', track:'classic', roomType:'Single', roommateName:'', addPillion:'', bike:'',
     yearsRiding:'', bikeExperience:'', previousTours:'',
     onroad:'', offroad:'',
     licence:false,
@@ -340,6 +340,12 @@
       bike_upgrade_crf1100: y.bike_upgrade_crf1100, bike_upgrade_bmw1250gs: y.bike_upgrade_bmw1250gs
     };
   }
+  // Track choice is offered on Edge of Africa 21-day departures only, to riders
+  // (not pillion / support car passengers), and only when the feed has a price.
+  function trackOffered(dep) {
+    return !!dep && form.tourVariant === 'edge-21' && dep.tour_id === 'edge-21' &&
+      !isPassenger() && parsePrice(dep.adventure_track_price) > 0;
+  }
   function getPricing() {
     if (form.tourCategory === 'oneday') {
       return { base: ONEDAY_PRICE, upgrade: 0, pillion: 0, shared: 0, total: ONEDAY_PRICE };
@@ -349,20 +355,34 @@
     var src = priceSource(dep);
     if (isPassenger()) {
       var pass = parsePrice(src.pillion);
-      return { base:pass, upgrade:0, pillion:0, shared:0, total:pass };
+      return { base:pass, upgrade:0, pillion:0, shared:0, track:0, upgradeIncluded:false, offerLabel:dep.offer_label || '', total:pass };
     }
     var base = parsePrice(src.base_price);
     var upgrade = 0;
     if (form.bike === 'crf1100') upgrade = parsePrice(src.bike_upgrade_crf1100);
     if (form.bike === 'bmw1250gs') upgrade = parsePrice(src.bike_upgrade_bmw1250gs);
     if (form.bike === 'bmw1300gs') upgrade = parsePrice(src.bike_upgrade_bmw1300gs);
+    // Adventure Track (Edge 21 only, riders only): price comes from the feed
+    // (Tour_Types Price_Adventure_Track_yy) and INCLUDES a premium bike upgrade:
+    // CRF1100 and R1250GS upgrades become 0, R1300GS charges only its difference
+    // over the R1250GS upgrade. Assumption: premium bike covers the BMW R1250GS
+    // (Andrew's 9 Nov ruling left this open).
+    var track = 0, upgradeIncluded = false;
+    if (trackOffered(dep) && form.track === 'adventure') {
+      track = parsePrice(dep.adventure_track_price);
+      if (form.bike === 'crf1100' || form.bike === 'bmw1250gs') { upgrade = 0; upgradeIncluded = true; }
+      if (form.bike === 'bmw1300gs') {
+        upgrade = Math.max(0, parsePrice(src.bike_upgrade_bmw1300gs) - parsePrice(src.bike_upgrade_bmw1250gs));
+        upgradeIncluded = true;
+      }
+    }
     var pillion = (form.addPillion === 'Yes') ? parsePrice(src.pillion) : 0;
     // Shared room is always a deduction. The availability feed sends Tour_Types
     // discounts positive ('15000') but the Edge 21 2028 override negative ('-15000');
     // adding the raw value inflated the total by 2x the discount (Garth Steggles,
     // 19 Oct 2026: R238,000 shown instead of R208,000). Normalise the sign here.
     var shared = (form.roomType !== 'Single') ? -Math.abs(parsePrice(src.shared_room_discount)) : 0;
-    return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, total: base+upgrade+pillion+shared };
+    return { base:base, upgrade:upgrade, pillion:pillion, shared:shared, track:track, upgradeIncluded:upgradeIncluded, offerLabel:dep.offer_label || '', total: base+track+upgrade+pillion+shared };
   }
 
   // ── Rendering ──
@@ -551,6 +571,13 @@
       if (!isPassenger()) {
       h += radioGroupHtml('addPillion','Are you adding a pillion/passenger?',true,['Yes','No'],form.addPillion);
 
+      // Edge 21 track choice
+      if (trackOffered(dep)) {
+        var trkLabels = ['Classic Track (included)', 'Adventure Track (+' + fmt(parsePrice(dep.adventure_track_price)) + ')'];
+        h += radioGroupHtml('track','Choose your track',true,trkLabels, form.track === 'adventure' ? trkLabels[1] : trkLabels[0]);
+        if (form.track === 'adventure') h += '<p class="helper">Includes a premium bike upgrade</p>';
+      }
+
       // Motorcycle preference
       h += '<div style="margin-top:24px"><label class="field-label">Motorcycle Preference<span class="req">*</span></label>';
       h += '<p class="helper">Standard options included in the tour price. Upgrades available where shown.</p>';
@@ -576,7 +603,12 @@
           h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_UP[i].v + '">';
           h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
           h += '<span class="radio-text" style="flex:1">' + BIKES_UP[i].l + '</span>';
-          h += '<span class="radio-price">+ ' + fmt(amt) + '</span></div>';
+          var shownAmt = amt;
+          if (trackOffered(dep) && form.track === 'adventure') {
+            if (BIKES_UP[i].v === 'bmw1300gs') shownAmt = Math.max(0, amt - (Number(upgradeSource.bike_upgrade_bmw1250gs) || 0));
+            else shownAmt = 0;
+          }
+          h += '<span class="radio-price">' + (shownAmt ? '+ ' + fmt(shownAmt) : 'Included') + '</span></div>';
         }
       }
 
@@ -588,6 +620,8 @@
         var p = getPricing();
         h += '<div class="price-card"><div class="price-head">Pricing Summary</div>';
         h += '<div class="price-row"><span>' + (isPassenger() ? (form.participantType === 'Pillion' ? 'Pillion' : 'Support car passenger') + ', own room' : 'Rider, single room (base price)') + '</span><span class="price-val">' + fmt(p.base) + '</span></div>';
+        if (p.offerLabel) h += '<div class="price-row"><span>' + escHtml(p.offerLabel) + ' (rider and pillion price)</span><span class="price-val green">Applied</span></div>';
+        if (p.track > 0) h += '<div class="price-row"><span>Adventure Track (includes a premium bike upgrade)</span><span class="price-val">+ ' + fmt(p.track) + '</span></div>';
         if (p.upgrade > 0) h += '<div class="price-row"><span>Motorcycle upgrade</span><span class="price-val">+ ' + fmt(p.upgrade) + '</span></div>';
         if (p.pillion > 0) h += '<div class="price-row"><span>Pillion/passenger</span><span class="price-val">+ ' + fmt(p.pillion) + '</span></div>';
         if (p.shared !== 0) h += '<div class="price-row"><span>Shared room discount</span><span class="price-val green">' + fmt(p.shared) + '</span></div>';
@@ -799,9 +833,12 @@
           }
           form.departureDate = '';
           form.bike = '';
+          form.track = 'classic';
+        } else if (name === 'track') {
+          form.track = (val.indexOf('Adventure') === 0) ? 'adventure' : 'classic';
         } else {
           form[name] = val;
-          if (name === 'participantType' && isPassenger()) { form.bike = ''; form.addPillion = ''; }
+          if (name === 'participantType' && isPassenger()) { form.bike = ''; form.addPillion = ''; form.track = 'classic'; }
         }
         render();
       });
@@ -884,7 +921,7 @@
       roomType: form.roomType,
       participantType: form.participantType,
       sharedRoomName: form.roommateName, addPillion: form.addPillion, bike: form.bike,
-      basePrice: p.base, upgradeAmount: p.upgrade, pillionAmount: p.pillion, sharedRoomDiscount: p.shared,
+      track: (p.track > 0) ? 'adventure' : 'classic', trackPrice: p.track, offerLabel: p.offerLabel, basePrice: p.base, upgradeAmount: p.upgrade, pillionAmount: p.pillion, sharedRoomDiscount: p.shared,
       yearsRiding: form.yearsRiding, bikeExperience: form.bikeExperience,
       previousTours: form.previousTours, onroad: form.onroad, offroad: form.offroad,
       licence: form.licence,
