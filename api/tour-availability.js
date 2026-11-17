@@ -42,6 +42,15 @@ var TOUR_NAMES = {
 var AVAILABLE_STATUSES = ['Available', 'Confirmed'];
 var WAITLIST_STATUSES  = ['Waitlist'];
 
+// WAITLIST BY TOUR (Andrew, 17 Nov 2026: "We need to set 14 April feast as
+// waitlist. Nigel and wife will book."). Zoho's Tours Status picklist has no
+// Waitlist value, and other systems key off Status = Confirmed, so the Zoho
+// record stays Confirmed and the public site shows these departures as
+// Waitlist. Bookings are still taken, with the waitlist banner on /book.
+var WAITLIST_TOUR_IDS = [
+  '6543704000003358963', // FoSA Apr 27, 14 Apr to 4 May 2027
+];
+
 var FETCH_FIELDS = 'Name,Status,Tour_Type,Departure_Date,End_Date,Max_Guests,Riders,Price_Rider,Price_Pillion,Upgrade_CRF1100,Upgrade_BMW,Shared_Room_Discount';
 
 // EDGE 21 PRICE STEP (Andrew, 16 Oct 2026): Edge of Africa 21 departures from
@@ -228,7 +237,8 @@ module.exports = async function handler(req, res) {
 
       var status = t.Status || '';
       var isAvailable = AVAILABLE_STATUSES.indexOf(status) !== -1;
-      var isWaitlist  = WAITLIST_STATUSES.indexOf(status) !== -1;
+      var isWaitlist  = WAITLIST_STATUSES.indexOf(status) !== -1
+                     || WAITLIST_TOUR_IDS.indexOf(String(t.id)) !== -1;
       if (!isAvailable && !isWaitlist) continue;
 
       if (!t.Departure_Date) continue;
