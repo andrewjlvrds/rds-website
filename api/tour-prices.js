@@ -36,7 +36,7 @@ var TOUR_NAMES = {
   'wc-10':    'Best of the Western Cape: 10 days',
 };
 
-var FETCH_FIELDS = 'Tour_Code,Name,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28';
+var FETCH_FIELDS = 'Tour_Code,Name,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28,Price_Adventure_Track_27,Price_Adventure_Track_28,Upgrade_BMW_R1300GS,Upgrade_BMW_R1300GS1';
 
 var cache = {
   data: null,
@@ -102,6 +102,8 @@ module.exports = async function handler(req, res) {
           shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_27))),
           bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_27))),
           bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
+          bike_upgrade_bmw1300gs: String(Math.round(num(t.Upgrade_BMW_R1300GS))),
+          adventure_track_price:  String(Math.round(num(t.Price_Adventure_Track_27))),
         };
       }
       if (num(t.Price_Rider_28)) {
@@ -111,6 +113,8 @@ module.exports = async function handler(req, res) {
           shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_28))),
           bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_28))),
           bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_28))),
+          bike_upgrade_bmw1300gs: String(Math.round(num(t.Upgrade_BMW_R1300GS1))),
+          adventure_track_price:  String(Math.round(num(t.Price_Adventure_Track_28))),
         };
       }
 
@@ -123,6 +127,8 @@ module.exports = async function handler(req, res) {
         shared_room_discount:   String(Math.round(num(t.Shared_Room_Discount_27))),
         bike_upgrade_crf1100:   String(Math.round(num(t.Upgrade_CRF1100_27))),
         bike_upgrade_bmw1250gs: String(Math.round(num(t.Upgrade_BMW_R1250GS_27))),
+        bike_upgrade_bmw1300gs: String(Math.round(num(t.Upgrade_BMW_R1300GS))),
+        adventure_track_price:  String(Math.round(num(t.Price_Adventure_Track_27))),
         bike_upgrade_transalp:  '0',
         years:                  years,
       };

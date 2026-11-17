@@ -148,7 +148,7 @@ module.exports = async function handler(req, res) {
     var hasTrack = body.track === "adventure" && trackPrice > 0;
     var extraNotes = [];
     if (hasTrack) {
-      extraNotes.push("Adventure Track selected (+ZAR " + trackPrice + ", premium bike included; Tour_Price includes the track price)");
+      extraNotes.push("Adventure Track selected (+ZAR " + trackPrice + ", bike upgrade charged separately)");
     }
     if (body.offerLabel) extraNotes.push(String(body.offerLabel).substring(0, 80) + " applied to rider/pillion price");
     var notesText = [String(body.customDescription || "").trim()].concat(extraNotes).filter(function (x) { return x; }).join("\n");
