@@ -63,8 +63,8 @@ var FETCH_FIELDS = 'Name,Status,Tour_Type,Departure_Date,End_Date,Max_Guests,Rid
 // LAST-MINUTE OFFER (Andrew, 12 Nov 2026): Edge of Africa 21 departure 14 Jan 2027
 // is 20% off the rider price and the pillion price only. Computed from the
 // Tour_Types 2027 figures, never typed. Upgrades and extras stay full price.
+// Removed 23 Nov 2026 (Andrew): Edge 21 14 Jan 2027 back to full price on the form.
 var DEPARTURE_OFFERS = {
-  'edge-21|2027-01-14': { percent: 20, label: 'January offer: 20% off' }
 };
 
 var EDGE21_STEP_FROM = '2028-01-01';
