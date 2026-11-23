@@ -13,7 +13,6 @@ var CONFIG = {
   version: '2026-09-11.3',
   status: 'published',          // 'proposed' | 'published' - PUBLISHED on Andrew's go-live instruction 11 Sep 2026 (page carries these figures)
   currency: 'ZAR',
-  legacyPublishedPrice: 8500,   // the figure still on the live page today; informational only
   routes: [
     { id: 'peninsula', label: 'Cape Peninsula and Cape of Good Hope', zoho: 'Cape Peninsula and Cape of Good Hope', base: 9000 },
     { id: 'winelands', label: 'Cape Coast and Winelands', zoho: 'Cape Coast and Winelands', base: 9500 },

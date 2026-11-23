@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Book a one-day ride from Cape Town - Ride Down South</title>
-<meta name="description" content="Request your guided one-day motorcycle ride from Cape Town: choose a date, route and bike for each rider. Andrew confirms by email; pay by card on the day.">
+<meta name="description" content="Request your guided one-day motorcycle ride from Cape Town: choose a date, route and bike for each rider. We confirm by email; pay by card on the day.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#0d1422;--ink:#070e12;--gold:#f7b605}
@@ -23,7 +23,7 @@ input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid
 .err{color:#a03028;font-weight:600;margin-top:10px}.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin-top:12px}.chk input{width:auto;margin-top:4px}
 .success{text-align:center;padding:40px 20px}
 </style></head><body>
-<section class="hero"><div class="in"><h1>Book a one-day ride</h1><p>Choose your date, route and bikes. Andrew checks availability and confirms by email. Pay by card on the day.</p></div></section>
+<section class="hero"><div class="in"><h1>Book a one-day ride</h1><p>Choose your date, route and bikes. We check availability and confirm by email. Pay by card on the day.</p></div></section>
 <main>
 <form id="f" novalidate>
 <div class="card"><h2>Your details</h2>
@@ -39,7 +39,7 @@ input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid
 <div class="chk"><input type="checkbox" name="pillion" id="pillion"><label for="pillion" style="margin:0;font-weight:500">One rider is bringing a pillion passenger - pillions ride free</label></div>
 </div>
 <div class="card"><h2>Riders and bikes</h2>
-<p class="note">One entry per paying rider. Bike choice is a preference - Andrew confirms the actual bike for your date with your booking.</p>
+<p class="note">One entry per paying rider. Let us know which bike you'd like to ride and we'll confirm availability.</p>
 <div id="riders"></div>
 <div style="margin-top:12px"><button type="button" class="btn sec" id="addRider">+ Add another rider</button></div>
 <div class="quote" id="quote"></div>
@@ -54,7 +54,7 @@ input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid
 <label>Emergency contact (name, relationship, number)</label><input name="emergency">
 <label>Anything else? Places you'd like to see, questions, requests</label><textarea name="notes"></textarea>
 <label>How did you hear about us?</label><input name="referral">
-<div class="chk"><input type="checkbox" name="terms" id="terms" required><label for="terms" style="margin:0;font-weight:500">I've read the <a href="https://ridedownsouth.com/terms-and-conditions/" target="_blank" rel="noopener">terms and conditions</a>. I understand this is a request; nothing is booked until Andrew confirms by email. *</label></div>
+<div class="chk"><input type="checkbox" name="terms" id="terms" required><label for="terms" style="margin:0;font-weight:500">I've read the <a href="https://ridedownsouth.com/terms-and-conditions/" target="_blank" rel="noopener">terms and conditions</a>. *</label></div>
 <div class="chk"><input type="checkbox" name="consent" id="consent"><label for="consent" style="margin:0;font-weight:500">Keep me posted on availability, pricing and RDS news by email.</label></div>
 <div class="err" id="err"></div>
 <div style="margin-top:20px"><button class="btn" id="submit" type="submit">Send my request</button></div>
@@ -79,8 +79,8 @@ function renderRiders(){var h='';riders.forEach(function(r,i){h+='<div class="ri
   document.getElementById('riders').innerHTML=h;renderQuote();}
 function rm(i){riders.splice(i,1);renderRiders();}
 function renderQuote(){var rid=document.getElementById('route').value;var q=quote(rid,riders.map(function(r){return r.bike;}));var el=document.getElementById('quote');
-  var head=CFG.status==='published'?'<div style="font-weight:600;margin-bottom:8px">Your price</div>':'<div style="margin-bottom:8px"><span class="badge">Proposed pricing</span> <span style="font-size:13px">Andrew confirms the price with your booking. These figures are indicative.</span></div>';
-  if(!q.priceable){el.innerHTML=head+'<div style="font-size:14px">'+(rid==='custom'?'Custom routes are quoted individually.':'Tell us a bit about what you\u2019d like and Andrew will suggest a route and price.')+' Route prices start from '+fmtR(Math.min.apply(null,CFG.routes.filter(function(r){return r.base;}).map(function(r){return r.base;})))+' per rider.</div>';return;}
+  var head=CFG.status==='published'?'<div style="font-weight:600;margin-bottom:8px">Your price</div>':'<div style="margin-bottom:8px"><span class="badge">Proposed pricing</span> <span style="font-size:13px">We confirm the price with your booking. These figures are indicative.</span></div>';
+  if(!q.priceable){el.innerHTML=head+'<div style="font-size:14px">'+(rid==='custom'?'Custom routes are quoted individually.':'Tell us a bit about what you\u2019d like and we’ll suggest a route and price.')+' Route prices start from '+fmtR(Math.min.apply(null,CFG.routes.filter(function(r){return r.base;}).map(function(r){return r.base;})))+' per rider.</div>';return;}
   var rows=q.riders.map(function(r){return '<tr><td>Rider '+r.i+' - '+esc(r.bike.label)+(r.pct?' <span style="opacity:.75">('+r.pct+'% group discount)</span>':'')+(r.sup?' <span style="opacity:.75">(+'+fmtR(r.sup)+' bike)</span>':'')+'</td><td>'+fmtR(r.total)+'</td></tr>';}).join('');
   el.innerHTML=head+'<table>'+rows+'<tr class="tot"><td>Group total - '+esc(q.route.label)+'</td><td>'+fmtR(q.groupTotal)+'</td></tr></table><div class="note" style="color:#cfd6e2;margin-top:8px">Pillions ride free. Paid by card on arrival. No deposit. Bike supplements are not discounted; pillions and guides don\u2019t count as paying riders.</div>';}
 fetch('/api/day-pricing').then(function(r){return r.json();}).then(function(c){CFG=c;var sel=document.getElementById('route');sel.innerHTML=c.routes.map(function(r){return '<option value="'+r.id+'">'+esc(r.label)+(r.base?' - from '+fmtR(r.base)+' per rider':'')+'</option>';}).join('');
@@ -96,7 +96,7 @@ document.getElementById('f').onsubmit=function(e){e.preventDefault();var f=e.tar
   if(!p.terms){err.textContent='Please tick the terms box to continue.';return;}
   var b=document.getElementById('submit');b.disabled=true;b.textContent='Sending…';
   fetch('/api/submit-day-booking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(function(r){return r.json();}).then(function(j){
-    if(j.success){document.getElementById('f').style.display='none';var d=document.getElementById('done');d.style.display='block';d.innerHTML='<h2>Request received</h2><p>Thanks '+esc(p.firstName)+'. Your reference is <b>'+esc(j.groupRef)+'</b>. Andrew will check the date, bikes and route and email your confirmation with the meeting time. Nothing to pay now.</p>';window.scrollTo(0,0);}
+    if(j.success){document.getElementById('f').style.display='none';var d=document.getElementById('done');d.style.display='block';d.innerHTML='<h2>Request received</h2><p>Thanks '+esc(p.firstName)+'. Your reference is <b>'+esc(j.groupRef)+'</b>. We’ll check the date, bikes and route and email your confirmation with the meeting time. Nothing to pay now.</p>';window.scrollTo(0,0);}
     else{err.textContent=j.error||'Something went wrong - please email ride@ridedownsouth.com';b.disabled=false;b.textContent='Send my request';}
   }).catch(function(){err.textContent='Network problem - please try again or email ride@ridedownsouth.com';b.disabled=false;b.textContent='Send my request';});};
 </script></body></html>
