@@ -35,7 +35,7 @@ function loadPricing(dep, form) {
     return html.substring(i, j + 5);
   }
   var code = ['parsePrice', 'isPassenger', 'trackOffered', 'priceSource', 'getPricing'].map(grab).join('\n');
-  var ctx = { form: form, getSelDep: function () { return dep; }, priceData: null, ONEDAY_PRICE: 8500 };
+  var ctx = { form: form, getSelDep: function () { return dep; }, priceData: null };
   vm.createContext(ctx);
   vm.runInContext(code + '\nthis.getPricing = getPricing;', ctx);
   return ctx.getPricing();
