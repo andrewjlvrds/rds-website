@@ -78,6 +78,11 @@ module.exports = async function handler(req, res) {
     if (!body || !body.email || !body.tour) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    // 1-Day rides are booked through /api/submit-day-booking (live pricing, one record per rider).
+    // Refuse them here so a stale page can never create a single-rider record.
+    if (body.tourCategory === "oneday") {
+      return res.status(410).json({ error: "Please reload ridedownsouth.com/book and choose the 1-Day Tour again, or email ride@ridedownsouth.com" });
+    }
     // Departure date is only collected by the form for FULL tours. The 1-Day,
     // "one of the other tours" and Custom categories never collect one, so a
     // blanket departureDate requirement rejected every one of those
