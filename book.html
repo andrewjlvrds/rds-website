@@ -47,6 +47,9 @@
     .radio-dot.on .radio-dot-inner { display: block; }
     .radio-text { font-size: 13px; color: #bbb; }
     .radio-item.on .radio-text { color: #e0e0e0; }
+    .radio-item.off { cursor: not-allowed; opacity: 0.45; }
+    .radio-item.off:hover { background: transparent; }
+    .bike-left { font-size: 12px; color: #aaa; margin-left: auto; padding-left: 8px; white-space: nowrap; }
     .radio-price { font-size: 12px; color: #D97B2B; font-weight: 500; margin-left: auto; }
     .bike-section { font-size: 11px; color: #999; font-weight: 600; letter-spacing: 1px; padding: 2px 0 6px; text-transform: uppercase; }
     .bike-divider { border-top: 1px solid #1e2530; margin-top: 6px; padding-top: 10px; }
@@ -618,12 +621,25 @@
       h += '<p class="helper">Standard options included in the tour price. Upgrades available where shown.</p>';
       h += '<div class="radio-group" id="bikeGroup">';
 
+      // Bikes still free for the chosen departure (feed field bikes_left, null/absent = unknown, show all).
+      // A model with none left stays on the list, greyed and not clickable, so riders can see why.
+      var bikesLeft = (dep && dep.bikes_left) ? dep.bikes_left : null;
+      var bikeLeftN = function(v) { return (bikesLeft && typeof bikesLeft[v] === 'number') ? bikesLeft[v] : null; };
+      var bikeOff = function(v) { var n = bikeLeftN(v); return n !== null && n <= 0; };
+      var bikeLeftHtml = function(v) {
+        var n = bikeLeftN(v);
+        if (n === null) return '';
+        return '<span class="bike-left">' + (n <= 0 ? 'Fully booked for this departure' : n + ' left') + '</span>';
+      };
+      if (form.bike && bikeOff(form.bike)) form.bike = '';
+
       h += '<div class="bike-section">Standard (included)</div>';
       for (var i = 0; i < BIKES_STD.length; i++) {
-        var on = form.bike === BIKES_STD[i].v ? ' on' : '';
-        h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_STD[i].v + '">';
+        var off = bikeOff(BIKES_STD[i].v);
+        var on = (!off && form.bike === BIKES_STD[i].v) ? ' on' : '';
+        h += '<div class="radio-item' + on + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : ' data-radio="bike" data-val="' + BIKES_STD[i].v + '"') + '>';
         h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
-        h += '<span class="radio-text">' + BIKES_STD[i].l + '</span></div>';
+        h += '<span class="radio-text">' + BIKES_STD[i].l + '</span>' + bikeLeftHtml(BIKES_STD[i].v) + '</div>';
       }
 
       // Upgrades — show based on tour variant, not just selected departure
@@ -634,11 +650,12 @@
         for (var i = 0; i < BIKES_UP.length; i++) {
           var amt = Number(upgradeSource[BIKES_UP[i].k]) || 0;
           if (!amt) continue;
-          var on = form.bike === BIKES_UP[i].v ? ' on' : '';
-          h += '<div class="radio-item' + on + '" data-radio="bike" data-val="' + BIKES_UP[i].v + '">';
+          var off = bikeOff(BIKES_UP[i].v);
+          var on = (!off && form.bike === BIKES_UP[i].v) ? ' on' : '';
+          h += '<div class="radio-item' + on + (off ? ' off' : '') + '"' + (off ? ' aria-disabled="true"' : ' data-radio="bike" data-val="' + BIKES_UP[i].v + '"') + '>';
           h += '<div class="radio-dot' + on + '"><div class="radio-dot-inner"></div></div>';
           h += '<span class="radio-text" style="flex:1">' + BIKES_UP[i].l + '</span>';
-          h += '<span class="radio-price">+ ' + fmt(amt) + '</span></div>';
+          h += '<span class="radio-price">+ ' + fmt(amt) + '</span>' + bikeLeftHtml(BIKES_UP[i].v) + '</div>';
         }
       }
 
