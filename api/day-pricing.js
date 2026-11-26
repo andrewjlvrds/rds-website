@@ -36,7 +36,7 @@ var CONFIG = {
   rules: {
     supplementsDiscounted: false,   // supplements never receive the group discount
     pillionsCount: false,           // pillions/guides do not count as paying riders
-    pillionPrice: 0,                // pillions ride free (Andrew, 11 Sep 2026)
+    pillionPrice: null,             // ZAR per pillion, read live from Zoho Tour_Types (Tour_Code 1DAY, Price_Pillion_27); never typed here. Was free until 26 Nov 2026; new enquiries only.
     payment: 'Card on arrival (PoS); no advance deposit'
   }
 };
@@ -46,7 +46,23 @@ function bikeById(id) { for (var i = 0; i < CONFIG.bikes.length; i++) if (CONFIG
 function discountPct(n) { for (var i = 0; i < CONFIG.groupDiscount.length; i++) if (n >= CONFIG.groupDiscount[i].minRiders) return CONFIG.groupDiscount[i].pct; return 0; }
 
 // quote(routeId, [bikeId,...]) -> { status, riders:[{bike,base,discountPct,discount,supplement,total}], groupTotal, priceable }
-function quote(routeId, bikeIds) {
+var zoho = require('./_zoho.js');
+var pillionCache = { v: null, t: 0 };
+// Pillion price per pillion from Zoho Tour_Types (1DAY). Cached 5 min; null if unreadable.
+async function loadPillionPrice() {
+  if (pillionCache.t && Date.now() - pillionCache.t < 300000) return pillionCache.v;
+  try {
+    var token = await zoho.getZohoToken();
+    var result = await zoho.zohoFetch(token, '/Tour_Types?fields=Tour_Code,Price_Pillion_27&per_page=200');
+    var rows = (result && result.data) || [], v = null;
+    for (var i = 0; i < rows.length; i++) if (rows[i].Tour_Code === '1DAY') v = Math.round(parseFloat(rows[i].Price_Pillion_27 || 0)) || null;
+    pillionCache = { v: v, t: Date.now() };
+    return v;
+  } catch (e) { console.error('[day-pricing] pillion price unavailable:', e.message); return pillionCache.v; }
+}
+
+// quote(routeId, [bikeId,...], hasPillion, pillionPrice). The pillion is added to the group total, never discounted.
+function quote(routeId, bikeIds, hasPillion, pillionPrice) {
   var route = routeById(routeId);
   var n = bikeIds.length;
   var pct = discountPct(n);
@@ -60,15 +76,19 @@ function quote(routeId, bikeIds) {
     if (priceable) total += t;
     riders.push({ index: i + 1, bike: bike.id, bikeLabel: bike.label, bikeZoho: bike.zoho, base: base, discountPct: pct, discount: disc, supplement: sup, total: t });
   }
-  return { status: CONFIG.status, version: CONFIG.version, route: route ? route.id : null, routeLabel: route ? route.label : null, riders: riders, payingRiders: n, groupTotal: priceable ? total : null, priceable: priceable };
+  var pil = (hasPillion && pillionPrice) ? pillionPrice : 0;
+  if (priceable) total += pil;
+  return { pillion: !!hasPillion, pillionPrice: pil, status: CONFIG.status, version: CONFIG.version, route: route ? route.id : null, routeLabel: route ? route.label : null, riders: riders, payingRiders: n, groupTotal: priceable ? total : null, priceable: priceable };
 }
 
-module.exports = function (req, res) {
+module.exports = async function (req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  return res.status(200).json(CONFIG);
+  var out = Object.assign({}, CONFIG, { rules: Object.assign({}, CONFIG.rules, { pillionPrice: await loadPillionPrice() }) });
+  return res.status(200).json(out);
 };
+module.exports.loadPillionPrice = loadPillionPrice;
 module.exports.CONFIG = CONFIG;
 module.exports.quote = quote;
 module.exports.routeById = routeById;
