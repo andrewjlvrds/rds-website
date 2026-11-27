@@ -36,7 +36,7 @@ input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid
 <div class="two"><div><label>Preferred date *</label><input name="date" type="date" required></div><div><label>Other dates that would also work</label><input name="altDates" placeholder="e.g. any day 19-22 Oct"></div></div>
 <label>Route *</label><select name="route" id="route"></select>
 <p class="note" id="routeNote"></p>
-<div class="chk"><input type="checkbox" name="pillion" id="pillion"><label for="pillion" style="margin:0;font-weight:500">One rider is bringing a pillion passenger - pillions ride free</label></div>
+<div class="chk"><input type="checkbox" name="pillion" id="pillion"><label for="pillion" style="margin:0;font-weight:500">One rider is bringing a pillion passenger <span id="pillionPrice"></span></label></div>
 </div>
 <div class="card"><h2>Riders and bikes</h2>
 <p class="note">One entry per paying rider. Let us know which bike you'd like to ride and we'll confirm availability.</p>
@@ -72,7 +72,8 @@ function fmtR(n){return 'R'+Number(n).toLocaleString('en-ZA');}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function quote(routeId,bikeIds){var route=null;CFG.routes.forEach(function(r){if(r.id===routeId)route=r;});var n=bikeIds.length,pct=0;CFG.groupDiscount.forEach(function(g){if(n>=g.minRiders&&g.pct>pct)pct=g.pct;});
   var out=[],tot=0,priceable=!!(route&&route.base);bikeIds.forEach(function(id,i){var bk=null;CFG.bikes.forEach(function(b){if(b.id===id)bk=b;});bk=bk||CFG.bikes[CFG.bikes.length-1];var base=priceable?route.base:null,disc=priceable?Math.round(base*pct/100):null,sup=bk.supplement||0,t=priceable?base-disc+sup:null;if(priceable)tot+=t;out.push({i:i+1,bike:bk,base:base,pct:pct,disc:disc,sup:sup,total:t});});
-  return {route:route,riders:out,groupTotal:priceable?tot:null,priceable:priceable,pct:pct};}
+  var pp=(document.getElementById('pillion').checked&&CFG.rules&&CFG.rules.pillionPrice)?CFG.rules.pillionPrice:0;if(priceable)tot+=pp;
+  return {route:route,riders:out,groupTotal:priceable?tot:null,priceable:priceable,pct:pct,pillion:pp};}
 function renderRiders(){var h='';riders.forEach(function(r,i){h+='<div class="rider"><div class="top"><span>Rider '+(i+1)+(i===0?' (you)':'')+'</span>'+(i>0?'<button type="button" class="link" onclick="rm('+i+')">remove</button>':'')+'</div>'
   +(i>0?'<label>Rider name *</label><input value="'+esc(r.name)+'" oninput="riders['+i+'].name=this.value">':'')
   +'<label>Preferred bike</label><select onchange="riders['+i+'].bike=this.value;renderQuote()">'+CFG.bikes.map(function(b){return '<option value="'+b.id+'"'+(b.id===r.bike?' selected':'')+'>'+esc(b.label)+(b.supplement?' (+'+fmtR(b.supplement)+')':'')+'</option>';}).join('')+'</select></div>';});
@@ -82,11 +83,13 @@ function renderQuote(){var rid=document.getElementById('route').value;var q=quot
   var head=CFG.status==='published'?'<div style="font-weight:600;margin-bottom:8px">Your price</div>':'<div style="margin-bottom:8px"><span class="badge">Proposed pricing</span> <span style="font-size:13px">We confirm the price with your booking. These figures are indicative.</span></div>';
   if(!q.priceable){el.innerHTML=head+'<div style="font-size:14px">'+(rid==='custom'?'Custom routes are quoted individually.':'Tell us a bit about what you\u2019d like and we’ll suggest a route and price.')+' Route prices start from '+fmtR(Math.min.apply(null,CFG.routes.filter(function(r){return r.base;}).map(function(r){return r.base;})))+' per rider.</div>';return;}
   var rows=q.riders.map(function(r){return '<tr><td>Rider '+r.i+' - '+esc(r.bike.label)+(r.pct?' <span style="opacity:.75">('+r.pct+'% group discount)</span>':'')+(r.sup?' <span style="opacity:.75">(+'+fmtR(r.sup)+' bike)</span>':'')+'</td><td>'+fmtR(r.total)+'</td></tr>';}).join('');
-  el.innerHTML=head+'<table>'+rows+'<tr class="tot"><td>Group total - '+esc(q.route.label)+'</td><td>'+fmtR(q.groupTotal)+'</td></tr></table><div class="note" style="color:#cfd6e2;margin-top:8px">Pillions ride free. Paid by card on arrival. No deposit. Bike supplements are not discounted; pillions and guides don\u2019t count as paying riders.</div>';}
+  if(q.pillion)rows+='<tr><td>Pillion passenger</td><td>ZAR '+Number(q.pillion).toLocaleString('en-US')+'</td></tr>';
+  el.innerHTML=head+'<table>'+rows+'<tr class="tot"><td>Group total - '+esc(q.route.label)+'</td><td>'+fmtR(q.groupTotal)+'</td></tr></table><div class="note" style="color:#cfd6e2;margin-top:8px">'+(CFG.rules&&CFG.rules.pillionPrice?'Pillion: ZAR '+Number(CFG.rules.pillionPrice).toLocaleString('en-US')+' per pillion. ':'')+'Paid by card on arrival. No deposit. Bike supplements are not discounted; pillions and guides don\u2019t count as paying riders.</div>';}
 fetch('/api/day-pricing').then(function(r){return r.json();}).then(function(c){CFG=c;var sel=document.getElementById('route');sel.innerHTML=c.routes.map(function(r){return '<option value="'+r.id+'">'+esc(r.label)+(r.base?' - from '+fmtR(r.base)+' per rider':'')+'</option>';}).join('');
   var pre=ROUTE_IN[qs.get('route')];if(pre)sel.value=pre;else sel.value='help';sel.onchange=renderQuote;
   var pb=qs.get('bike');if(pb&&c.bikes.some(function(b){return b.id===pb;}))riders[0].bike=pb;
   var nr=parseInt(qs.get('riders')||'1',10);while(riders.length<Math.min(nr,8))riders.push({name:'',bike:riders[0].bike});
+  var pl=document.getElementById('pillionPrice');if(pl&&c.rules&&c.rules.pillionPrice)pl.textContent='(Pillion: ZAR '+Number(c.rules.pillionPrice).toLocaleString('en-US')+')';document.getElementById('pillion').onchange=renderQuote;
   renderRiders();});
 document.getElementById('addRider').onclick=function(){if(riders.length<8){riders.push({name:'',bike:'none'});renderRiders();}};
 document.getElementById('f').onsubmit=function(e){e.preventDefault();var f=e.target,err=document.getElementById('err');err.textContent='';
