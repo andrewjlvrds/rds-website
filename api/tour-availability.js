@@ -3,6 +3,7 @@
 // Replaces the previous Google Sheets implementation.
 
 var zoho = require('./_zoho');
+var bikes = require('./_bike-availability');
 
 var TOUR_TYPE_TO_ID = {
   'FoSA 20': 'feast-20',
@@ -90,20 +91,22 @@ var SEAT_INCLUDE = { 'Deposit Details Sent': 1, 'Deposit Paid': 1, 'Balance Paid
 // Returns { tourRecordId: seatsTaken } or null when the Bookings read fails,
 // in which case the handler falls back to the Riders rollup so the feed
 // never goes dark.
-async function loadSeatCounts(token) {
+async function loadSeatCounts(token, bikeRows) {
   try {
     var counts = {};
     var page = 1;
     var more = true;
     while (more && page <= 20) {
       var r = await zoho.zohoFetchV8(token,
-        '/Bookings?fields=Tour,Participant_Type,Booking_Status&per_page=200&page=' + page);
+        '/Bookings?fields=Tour,Participant_Type,Booking_Status,Motorcycle_Preference,Allocated_Bike&per_page=200&page=' + page);
       // A page with no data (error body, or a later page failing) means the
       // count would be partial and overstate free places - use the fallback.
       if (!r || !r.data) return null;
       for (var i = 0; i < r.data.length; i++) {
         var b = r.data[i];
         if (!b.Tour || !b.Tour.id) continue;
+        // Bike demand (every booking that holds a bike, whatever the tour), see _bike-availability.js
+        if (bikeRows) { var bd = bikes.bikeDemandFromBooking(b); if (bd) bikeRows.push(bd); }
         if (b.Participant_Type !== 'Rider') continue;
         if (!b.Booking_Status || !SEAT_INCLUDE[b.Booking_Status]) continue;
         counts[b.Tour.id] = (counts[b.Tour.id] || 0) + 1;
@@ -114,6 +117,27 @@ async function loadSeatCounts(token) {
     return counts;
   } catch (e) {
     console.error('[tour-availability] Bookings read failed, falling back to Riders rollup:', e.message);
+    return null;
+  }
+}
+
+// Fleet size per bike model from Zoho Vehicles, or null when the read fails
+// (the form then shows every bike as before - it fails open, never blocks a booking).
+async function loadFleetCapacity(token) {
+  try {
+    var all = [];
+    var page = 1;
+    var more = true;
+    while (more && page <= 5) {
+      var r = await zoho.zohoFetch(token, '/Vehicles?fields=Vehcile_Type,Bike_Status&per_page=200&page=' + page);
+      if (!r || !r.data) return null;
+      all = all.concat(r.data);
+      more = r.info && r.info.more_records;
+      page++;
+    }
+    return bikes.fleetCapacity(all);
+  } catch (e) {
+    console.error('[tour-availability] Vehicles read failed, bike counts off:', e.message);
     return null;
   }
 }
@@ -203,7 +227,10 @@ module.exports = async function handler(req, res) {
   try {
     var token = await zoho.getZohoToken();
     var typePrices = await loadTypePrices(token);
-    var seatCounts = await loadSeatCounts(token);
+    var bikeDemand = [];
+    var seatCounts = await loadSeatCounts(token, bikeDemand);
+    // Bike counts need both a full Bookings read and the fleet list; otherwise leave them off.
+    var fleetCap = seatCounts ? await loadFleetCapacity(token) : null;
 
     var allTours = [];
     var page = 1;
@@ -287,6 +314,8 @@ module.exports = async function handler(req, res) {
         tour_end_date:          zohoDateToDisplay(t.End_Date),
         tour_status:            isWaitlist ? 'Waitlist' : 'Available',
         places_available:       String(placesAvail),
+        // Bikes of each model still free for this departure (null = unknown, show all). See _bike-availability.js
+        bikes_left:             fleetCap ? bikes.bikesLeft(t.id, allTours, bikeDemand, fleetCap) : null,
         base_price:             basePrice,
         pillion:                pillionPrice,
         shared_room_discount:   tp ? tp.shared_room_discount   : String(n(t.Shared_Room_Discount)),
@@ -318,6 +347,7 @@ module.exports = async function handler(req, res) {
       updated:    new Date().toISOString(),
       source:     'zoho',
       price_source: 'tour_types (per departure year), tours record fallback',
+      bike_buffer_days: bikes.BUFFER_DAYS,
       seat_source:  seatCounts ? 'bookings (rider; deposit details sent / deposit paid / balance paid)' : 'riders rollup (fallback)',
       tour_names: tourNamesList,
       departures: departures
