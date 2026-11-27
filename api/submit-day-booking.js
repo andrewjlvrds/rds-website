@@ -79,7 +79,8 @@ module.exports = async function handler(req, res) {
   }
   riders[0].name = riders[0].name || (first + " " + last);
 
-  var q = pricing.quote(route.id, riders.map(function (r) { return r.bike; }));
+  var pillionPrice = pillion ? await pricing.loadPillionPrice() : null;
+  var q = pricing.quote(route.id, riders.map(function (r) { return r.bike; }), pillion, pillionPrice);
   var published = pricing.CONFIG.status === "published";
   var ref = groupRef();
   var prefix = testMode ? "TEST " : "";
@@ -101,7 +102,7 @@ module.exports = async function handler(req, res) {
       var isLead = r === 0;
       var nm = riders[r].name.split(/\s+/);
       var rFirst = isLead ? first : nm[0], rLast = isLead ? last : (nm.slice(1).join(" ") || "(group of " + first + " " + last + ")");
-      var snapshot = JSON.stringify({ v: q.version, s: q.status, route: q.route, riders: q.payingRiders, bike: rq.bike, base: rq.base, pct: rq.discountPct, disc: rq.discount, sup: rq.supplement, total: rq.total });
+      var snapshot = JSON.stringify({ v: q.version, s: q.status, route: q.route, riders: q.payingRiders, bike: rq.bike, base: rq.base, pct: rq.discountPct, disc: rq.discount, sup: rq.supplement, pil: isLead ? q.pillionPrice : 0, total: rq.total == null ? null : rq.total + (isLead ? q.pillionPrice : 0) });
       var rec = {
         Name: prefix + rFirst + " " + rLast + " - 1-Day Tour " + date.slice(5, 7) + "/" + date.slice(2, 4) + " " + Date.now().toString(36),
         First_Name: rFirst, Last_Name: rLast,
@@ -115,7 +116,7 @@ module.exports = async function handler(req, res) {
         Payment_Method: "Card Payment (PoS)",
         Day_Route: route.zoho, Day_Group_Ref: ref, Day_Quote_Snapshot: snapshot.slice(0, 255),
         Booking_Notes: cap((isLead ? "" : "Group rider " + (r + 1) + " of " + riders.length + " (organiser " + first + " " + last + "). ") + (altDates ? "Alt dates: " + altDates + ". " : "") + fullNotes + (submissionId ? " [sid:" + submissionId + "]" : ""), 255),
-        Tour_Price_Notes: published ? ("Day tour quote " + q.version + ": " + fmtR(rq.total) + " (" + rq.bikeLabel + (rq.discountPct ? ", " + rq.discountPct + "% group" : "") + ")")
+        Tour_Price_Notes: published ? ("Day tour quote " + q.version + ": " + fmtR(rq.total + (isLead ? q.pillionPrice : 0)) + " (" + rq.bikeLabel + (rq.discountPct ? ", " + rq.discountPct + "% group" : "") + (isLead && q.pillionPrice ? ", incl. pillion " + fmtR(q.pillionPrice) : "") + ")")
           : ("Quote pending - proposed " + (rq.total != null ? fmtR(rq.total) : "TBC") + " per pricing " + q.version + " (NOT approved). Andrew to confirm price before confirmation."),
         Bike_and_Gear_Notes: cap((ownBike ? "Own bike: " + ownBike + ". " : "") + (gear ? "Gear needed: " + gear : ""), 255),
         Previous_Adventure_Riding_Experience: experience || undefined,
@@ -126,7 +127,7 @@ module.exports = async function handler(req, res) {
         Communication_Consent: consent, T_s_and_C_s_checked: terms ? "Yes" : "No", Waiver_Signed: false
       };
       if (rq.bikeZoho) rec.Motorcycle_Preference = rq.bikeZoho;
-      if (published && rq.total != null) rec.Tour_Price = rq.total; // NOT day_Ride_Amount (multi-day add-on, summed into Total_Amount_Due)
+      if (published && rq.total != null) rec.Tour_Price = rq.total + (isLead ? q.pillionPrice : 0); // NOT day_Ride_Amount (multi-day add-on, summed into Total_Amount_Due)
       Object.keys(rec).forEach(function (k) { if (rec[k] === undefined || rec[k] === "") delete rec[k]; });
       var cr = await fetch(zoho.ZOHO_API + "/Bookings", { method: "POST", headers: { Authorization: "Zoho-oauthtoken " + token, "Content-Type": "application/json" }, body: JSON.stringify({ data: [rec], trigger: [] }) });
       var cj = await cr.json();

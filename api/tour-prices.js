@@ -19,6 +19,7 @@ var TOUR_CODE_TO_ID = {
   'BoN':     'bon-14',
   'DDN 12':  'ddn-12',    // Desert and Dunes of Namibia, 12 days from Windhoek (Andrew 26 Oct 2026)
   'SST 14':  'sst-14',
+  '1DAY':    'day-1',     // 1-Day Cape Town Ride: pillion price for day rides (Andrew 26 Nov 2026). Not a multi-day tour, no departures.
   'CoC 10':  'wc-10',     // Best of the Western Cape (renamed from Cream of the Cape 16 Oct 2026), 10-day Cape Town loop (8 Oct 2026); pages use tour id wc-10
 };
 
@@ -34,6 +35,7 @@ var TOUR_NAMES = {
   'ddn-12':   'Desert and Dunes of Namibia',
   'sst-14':   'Southern Sweep: 14 days',
   'wc-10':    'Best of the Western Cape: 10 days',
+  'day-1':    '1-Day Cape Town Ride',
 };
 
 var FETCH_FIELDS = 'Tour_Code,Name,Status,Price_Rider_27,Price_Pillion_27,Upgrade_CRF1100_27,Upgrade_BMW_R1250GS_27,Shared_Room_Discount_27,Price_Rider_28,Price_Pillion_28,Upgrade_CRF1100_28,Upgrade_BMW_R1250GS_28,Shared_Room_Discount_28,Price_Adventure_Track_27,Price_Adventure_Track_28,Upgrade_BMW_R1300GS,Upgrade_BMW_R1300GS1';
